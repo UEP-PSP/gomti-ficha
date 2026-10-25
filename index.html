@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-/* GOMTI Ficha — versão 202610251426 — sem dados: a missão vem do link/ficheiro gerado no RM */
+/* GOMTI Ficha — versão 202610251446 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -46,7 +46,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + (D.pre ? '<div class="ok" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1;margin-bottom:8px">📋 <strong>Pedido #' + esc(D.pre.sol) + '</strong> · ' + esc(D.pre.data) + (D.pre.hora ? " · " + esc(D.pre.hora) + (D.pre.horaFim ? "–" + esc(D.pre.horaFim) : "") : "") + ' · ' + esc(D.pre.local)
                 + (D.pre.pessoas && D.pre.pessoas.length ? '<br>👥 Nomeados: ' + esc(D.pre.pessoas.map(function(x) { return x.replace(/^\d+\s*—\s*/, ""); }).join(", ")) : '') + (D.pre.notas ? '<br>📝 ' + esc(D.pre.notas) : '') + '</div>' : '')
             + '<div class="nf"><label>📁 Nome do ficheiro</label><input data-k="nomeFich" placeholder="' + esc(nomeSugerido()) + '" value="' + esc(v.nomeFich) + '"/></div>'
-            + '<div id="estado" class="ok">Guardado automaticamente neste telemóvel. No fim, «💾 Guardar ficheiro» e importe-o no RM' + (S.papel === "solo" ? "" : " (junto com a ficha " + (pct ? "da Equipa" : "do Comandante do PCT") + ")") + '.</div>'
+            + '<div id="estado" class="ok">Guardado automaticamente neste telemóvel.</div>'
             + fitaHtml()
             + so(!eqp) + '<h2>1. Identificação</h2><div class="g2">'
             + '<div><label>Nº da solicitação (pedido)</label><input data-k="sol" value="' + esc(v.sol) + '" inputmode="numeric"/></div>'
@@ -77,7 +77,8 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + '<div class="g2"><div><label>NPP / NUIPC</label><input data-k="npp" value="' + esc(v.npp) + '"/></div><div><label>Detenções / feridos civis / feridos PSP</label><div class="row"><input type="number" data-k="det" placeholder="Det." value="' + esc(v.det) + '"/><input type="number" data-k="ferC" placeholder="Civis" value="' + esc(v.ferC) + '"/><input type="number" data-k="ferP" placeholder="PSP" value="' + esc(v.ferP) + '"/></div></div></div>'
             + '<label>Operação conjunta? ' + radio("opConj", v.opConj) + '</label><label>Policiamento desportivo? ' + radio("polDesp", v.polDesp) + '</label></section>'
             + so(!eqp) + '<h2>8. Notas para o relato</h2><textarea data-k="notas" style="min-height:160px" placeholder="Quem contactou e a que horas, o que foi pedido, o que se observou, decisões apoiadas, dificuldades, quem deu por terminado…">' + esc(v.notas) + '</textarea></section>'
-            + '<div style="text-align:center;margin:16px"><button id="bExp2">💾 Guardar ficheiro</button> <button id="bPart2">📤 Partilhar (WhatsApp, Signal, e-mail…)</button></div><input type="file" id="fAbrir" accept=".json" style="display:none"/></main>';
+            + '<section style="text-align:center"><h2>📤 No fim da missão</h2><div class="nota" style="margin-bottom:8px;text-align:left">' + destinoTexto() + '</div>'
+            + '<button id="bPart2" style="width:100%;padding:13px;font-size:16px">📤 Partilhar a ficha (WhatsApp, e-mail…)</button><div style="margin-top:8px"><button class="sec" id="bExp2">💾 Guardar ficheiro no telemóvel</button></div></section><input type="file" id="fAbrir" accept=".json" style="display:none"/></main>';
         renderEquipas(); renderLista("vts", S.viaturas, linhaViatura); renderLista("obs", S.observadores, linhaObs);
         ligar();
     }
@@ -139,6 +140,12 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + '<button class="bigb" data-papel="pct">🎯 Comandante do PCT<br><small>contactos, tarefas, horas e missão de cada voo, ocorrências</small></button>'
             + '<button class="bigb sec" data-papel="solo">🧩 Equipa sozinha (ficha completa)</button>'
             + '<input type="file" id="fAbrir" accept=".json" style="display:none"/><button class="sec" id="bAbrir" style="margin-top:10px">📂 Abrir uma ficha exportada</button></section></main>';
+    }
+    // A quem enviar a ficha no fim
+    function destinoTexto() {
+        if (S.papel === "solo") return "Equipa sozinha: é a própria equipa que elabora o RM. Partilhe a ficha para si (WhatsApp/e-mail), abra-a num PC da intranet e, no RM, «📥 Importar ficha».";
+        if (S.papel === "pct") return "Envie a ficha a quem elabora o RM (normalmente é o próprio Chefe de Equipa) — junto com as fichas das Equipas. No RM: «📥 Importar ficha» com todas de uma vez, ou «📥 Juntar fichas» num RM já criado.";
+        return "Envie a ficha a quem elabora o RM: o Chefe de Equipa (PCT). Se a equipa estiver sozinha, é a própria equipa que importa no RM («📥 Importar ficha»).";
     }
     function semVoos() { return (D.tiposSemMin || []).indexOf(S.tipo) > -1; }       // Exposição / Demonstração
     function faseVoos(f) { return /^4\./.test(f) && temANT() && S.papel !== "pct" && !semVoos(); }
@@ -557,7 +564,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             var fich = null;
             try { fich = new File([txt], nome, { type: "application/json" }); } catch (eF) {}
             if (fich && navigator.canShare && navigator.canShare({ files: [fich] })) {
-                navigator.share({ files: [fich], title: nome, text: "Ficha de missão " + D.codigo + " (" + ({ eq: "Equipa", pct: "Comandante do PCT", solo: "completa" }[S.papel] || "") + ") — importar no RM com «📥 Importar ficha»." })
+                navigator.share({ files: [fich], title: nome, text: "Ficha de missão " + D.codigo + (D.pre ? " · pedido #" + D.pre.sol : "") + " (" + ({ eq: "Equipa", pct: "Comandante do PCT", solo: "Equipa sozinha" }[S.papel] || "") + ") — para quem elabora o RM: importar no RM com «📥 Importar ficha» (ou «📥 Juntar fichas» no RM já criado)." })
                     .then(function() { feito("📤 Partilhada: " + nome + " (" + hora() + ")."); })
                     .catch(function(e) { if (!e || e.name !== "AbortError") { descarregar(); feito("⚠️ Não foi possível partilhar — ficheiro guardado em Transferências (" + nome + "); envie-o a partir daí."); } });
                 return;
