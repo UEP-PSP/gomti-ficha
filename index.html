@@ -1,0 +1,707 @@
+<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
+/* GOMTI Ficha — versão 202610251426 — sem dados: a missão vem do link/ficheiro gerado no RM */
+var GOMTI_FICHA_APP = function _fichaDigitalApp() {
+    var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
+    var S = { equipas: [], viaturas: [], observadores: [] };
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+    function agora() { var d = new Date(); d.setSeconds(0, 0); var p = function(n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()); }
+    function hora() { return agora().substring(11); }
+    function mins(a, b) { if (!a || !b) return ""; var x = a.split(":"), y = b.split(":"); var m = (+y[0] * 60 + +y[1]) - (+x[0] * 60 + +x[1]); if (m < 0) m += 1440; return m; }
+    function opts(lista, val, vazio) { return '<option value="">' + (vazio || "— escolher —") + '</option>' + lista.map(function(x) { return '<option value="' + x.id + '"' + (String(val) === String(x.id) ? " selected" : "") + '>' + esc(x.t) + '</option>'; }).join(""); }
+    function familia(n) { return String(n || "").trim().split(/\s+/)[0].toUpperCase(); }
+    var css = "body{font:15px Arial,sans-serif;margin:0;background:#f3f6fa;color:#1d2733}header{background:#1a3a5c;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}"
+        + "header h1{font-size:17px;margin:0}.hb{flex:1 1 100%;gap:6px;flex-wrap:wrap}.hb button{flex:1 1 auto;padding:8px 8px}main{max-width:900px;margin:0 auto;padding:10px}section{background:#fff;border:1px solid #d5deea;border-radius:8px;padding:10px 12px;margin:10px 0}"
+        + "h2{font-size:15px;color:#1a3a5c;margin:0 0 8px}label{display:block;font-size:13px;color:#445;margin:6px 0 2px}input,select,textarea{font:15px Arial;padding:7px;border:1px solid #b9c6d6;border-radius:5px;width:100%;box-sizing:border-box}"
+        + "textarea{min-height:70px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:600px){.g2{grid-template-columns:1fr}}"
+        + ".row{display:flex;gap:6px;align-items:center}.row>*{flex:1}button{font:14px Arial;padding:8px 12px;border-radius:5px;border:1px solid #1a6eb5;background:#1a6eb5;color:#fff;cursor:pointer}"
+        + "button.sec{background:#fff;color:#1a6eb5}button.rem{background:#c62828;border-color:#c62828;padding:4px 9px;flex:0 0 auto}button.ag{flex:0 0 auto;padding:7px 9px;background:#2e7d32;border-color:#2e7d32}"
+        + ".eq{border:1px solid #c9d6e6;border-radius:6px;padding:8px;margin:8px 0;background:#fafcff}.voo{display:grid;grid-template-columns:28px 1.2fr 1.2fr 1fr 1fr 60px 1.4fr 34px;gap:4px;align-items:center;margin:3px 0}"
+        + "@media(max-width:700px){.voo{grid-template-columns:1fr 1fr}}.min{font-weight:bold;text-align:center}.nota{font-size:12px;color:#666}.rad label{display:inline-block;margin-right:14px}.rad input{width:auto}"
+        + ".ok{background:#e8f5e9;border:1px solid #a5d6a7;color:#1b5e20;padding:6px 10px;border-radius:5px;font-size:13px}"
+        + "details.fase{border:1px solid #d5deea;border-radius:7px;margin:6px 0;background:#fff}details.fase>summary{padding:9px 10px;font-weight:bold;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:6px}"
+        + "details.fase.atual{border:2px solid #1a6eb5;box-shadow:0 0 0 3px rgba(26,110,181,.12)}details.fase.feita>summary{color:#2e7d32}details.fase .tar{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-top:1px solid #eef2f7;font-size:15px}"
+        + "details.fase .tar input{width:24px;height:24px;flex:0 0 24px;margin:0}details.fase .tar.feita span{color:#777;text-decoration:line-through}details.fase .tar small{color:#2e7d32;white-space:nowrap;margin-left:auto}"
+        + ".agora{background:#1a6eb5;color:#fff;border-radius:12px;padding:1px 8px;font-size:11px}.btnFase{margin:6px 10px 10px;width:calc(100% - 20px);padding:11px;font-size:15px}"
+        + ".chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}button.chip{background:#fff;color:#1a3a5c;border:1px solid #b9c6d6;border-radius:16px;padding:7px 11px;font-size:14px}button.chip.on{background:#1a6eb5;color:#fff;border-color:#1a6eb5}"
+        + ".mat{padding:6px 10px 10px;border-top:1px solid #eef2f7}.mat>b{display:block;font-size:13px;color:#445;margin-top:8px}.levo{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed #e3e9f1;margin:0;font-size:15px;color:#1d2733}"
+        + ".levo input[type=checkbox]{width:24px;height:24px;flex:0 0 24px;margin:0}.levo span{flex:1}input.hh{width:112px;flex:0 0 112px;padding:4px}"
+        + ".fh{display:flex;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #eef2f7;font-size:14px}.fh input{width:110px;flex:0 0 110px}"
+        + ".pv{padding:8px 10px;border-top:1px solid #eef2f7}button.bigb{width:100%;padding:13px;font-size:16px;margin:6px 0}button.bAt{background:#e65100;border-color:#e65100}.noar{background:#fff8e1;border:1px solid #ffcc80;border-radius:6px;padding:8px;margin:6px 0}"
+        + ".voo.vc.noar{background:#fff8e1;border-color:#ffcc80}.di{border-top:1px dashed #d5deea;padding:6px 0}.gps{margin:4px 0 8px}body.alto{font-size:18px;background:#fff;color:#000}body.alto main section,body.alto details.fase{border:2px solid #000}body.alto label,body.alto .nota{color:#000;font-size:16px}body.alto input,body.alto select,body.alto textarea{font-size:18px;border:2px solid #000;color:#000}body.alto button{font-size:17px;font-weight:bold}body.alto details.fase>summary{font-size:18px}.nf{margin:0 0 8px}.nf label{margin-top:0}button.hchip{flex:0 0 auto;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:14px;padding:5px 10px;font-size:15px;font-weight:bold;white-space:nowrap}.row.hv{margin:4px 0}.row.hv label{flex:0 0 118px;margin:0;font-size:14px}.row.hv input{flex:1 1 auto;min-width:0;font-size:17px}.gps a{color:#1a6eb5}"
+        + ".voo.vc{display:block;border:1px solid #d5deea;border-radius:6px;padding:6px 8px;margin:6px 0;background:#fff}.vc .vh{display:flex;justify-content:space-between;align-items:center;gap:6px}.g2t{display:grid;grid-template-columns:1fr 1fr;gap:6px}";
+    var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+    var dl = '<datalist id="dlPessoas">' + D.pessoas.map(function(p) { return '<option value="' + esc(p.m + " — " + p.n) + '">'; }).join("") + '</datalist>';
+
+    function pessoaInput(v, ph) { return '<input list="dlPessoas" placeholder="' + (ph || "matrícula — nome") + '" value="' + esc(v || "") + '" data-f="pessoa"/>'; }
+    function radio(nome, val) { return '<span class="rad"><label><input type="radio" name="' + nome + '" value="nao"' + (val === "nao" ? " checked" : "") + '/> Não</label><label><input type="radio" name="' + nome + '" value="sim"' + (val === "sim" ? " checked" : "") + '/> Sim</label></span>'; }
+
+    function render() {
+        var v = S;
+        if (!S.papel || mostrarEscolha) { $("app").innerHTML = htmlPapel(); ligar(); return; }
+        var pct = S.papel === "pct", eqp = S.papel === "eq";
+        var so = function(mostra) { return mostra ? '<section>' : '<section style="display:none">'; };
+        $("app").innerHTML = dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + ' (' + esc(D.modo) + ')</h1>'
+            + '<div class="row hb">' + (window.GOMTI_APP ? '<button class="sec" id="bHome" title="Outras missões">🏠</button>' : '') + '<button class="sec" id="bPapel" title="Trocar o papel">' + PAPEIS[S.papel] + ' ✎</button><button class="sec" id="bAlto" title="Letra maior e contraste alto (ao sol)">🔆</button><button class="sec" id="bAbrir">📂 Abrir</button><button id="bExp">💾 Guardar</button><button id="bPart">📤 Partilhar</button></div></header><main>'
+            + (D.pre ? '<div class="ok" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1;margin-bottom:8px">📋 <strong>Pedido #' + esc(D.pre.sol) + '</strong> · ' + esc(D.pre.data) + (D.pre.hora ? " · " + esc(D.pre.hora) + (D.pre.horaFim ? "–" + esc(D.pre.horaFim) : "") : "") + ' · ' + esc(D.pre.local)
+                + (D.pre.pessoas && D.pre.pessoas.length ? '<br>👥 Nomeados: ' + esc(D.pre.pessoas.map(function(x) { return x.replace(/^\d+\s*—\s*/, ""); }).join(", ")) : '') + (D.pre.notas ? '<br>📝 ' + esc(D.pre.notas) : '') + '</div>' : '')
+            + '<div class="nf"><label>📁 Nome do ficheiro</label><input data-k="nomeFich" placeholder="' + esc(nomeSugerido()) + '" value="' + esc(v.nomeFich) + '"/></div>'
+            + '<div id="estado" class="ok">Guardado automaticamente neste telemóvel. No fim, «💾 Guardar ficheiro» e importe-o no RM' + (S.papel === "solo" ? "" : " (junto com a ficha " + (pct ? "da Equipa" : "do Comandante do PCT") + ")") + '.</div>'
+            + fitaHtml()
+            + so(!eqp) + '<h2>1. Identificação</h2><div class="g2">'
+            + '<div><label>Nº da solicitação (pedido)</label><input data-k="sol" value="' + esc(v.sol) + '" inputmode="numeric"/></div>'
+            + '<div></div>'
+            + '<div><label>Entidade solicitadora</label><input list="dlEnt" data-k="ent" value="' + esc(v.ent) + '"/><datalist id="dlEnt">' + D.entidades.map(function(e) { return '<option value="' + esc(e) + '">'; }).join("") + '</datalist></div>'
+            + '<div><label>Nº de referência</label><input data-k="ref" value="' + esc(v.ref) + '"/></div></div>'
+            + '<label>Local da missão</label><input data-k="local" value="' + esc(v.local) + '"/>'
+            + '<label>Comandante do Policiamento? ' + radio("cmd", v.cmd) + '</label><input data-k="cmdNome" placeholder="Posto e nome — ex.: Subintendente João Paulo" value="' + esc(v.cmdNome) + '"/></section>'
+            + '<section><h2>2. Horários' + (S.papel === "solo" ? '' : ' <span class="nota" style="font-weight:normal">(' + (pct ? 'do Chefe' : 'desta Equipa') + ')</span>') + '</h2><div class="g2">'
+            + [["hSai", "Saída da unidade"], ["hCheg", "Chegada ao local"], ["hSaiL", "Saída do local"], ["hReg", "Regresso à unidade"]].map(function(h) {
+                return '<div><label>' + h[1] + '</label><div class="row"><input type="datetime-local" data-k="' + h[0] + '" value="' + esc(v[h[0]]) + '"/><button class="ag" data-agora="' + h[0] + '">Agora</button></div></div>'; }).join("")
+            + '</div></section>'
+            + (eqp ? '' : '<section><h2>3. Comando</h2><label>Há Chefe de Equipa? ' + radio("chefe", v.chefe) + '</label>'
+            + '<div class="g2"><div><label>Chefe de Equipa</label>' + pessoaInput(v.chefeP).replace('data-f="pessoa"', 'data-k="chefeP"') + '</div>'
+            + '<div><label>Onde ficou (como entra na frase)</label><input data-k="chefeLocal" placeholder="no PCT junto ao…" value="' + esc(v.chefeLocal) + '"/></div></div></section>')
+            + so(!pct) + '<h2>4. Equipa e meios</h2><div id="eqs"></div>' + (eqp ? '' : '<button class="sec" id="bEqA">＋ Equipa ANT</button> <button class="sec" id="bEqM">＋ Equipa MNA</button>') + '</section>'
+            + '<section' + (pct ? ' style="display:none"' : '') + '><h2>5. Viaturas e observadores</h2><div id="vts"></div><button class="sec" id="bVt">＋ Viatura</button>'
+            + '<label style="margin-top:10px">Observadores (presentes sem operar meios)</label><div id="obs"></div><button class="sec" id="bOb">＋ Observador</button></section>'
+            + '<section><h2>6. Área visada</h2><div style="display:none"><div class="g2"><div><label>Descolagem — nome do local</label><input data-k="descNome" value="' + esc(v.descNome) + '"/></div>'
+            + '<div><label>Descolagem — coordenadas (opcional)</label><input data-k="descCoord" placeholder="38.7223, -9.1393" value="' + esc(v.descCoord) + '"/></div></div>' + gpsHtml("descCoord", "📍 Usar a minha posição (descolagem)") + '</div>'
+            + '<div' + (eqp ? ' style="display:none"' : '') + '><label>Área visada (o que foi sobrevoado)</label><input data-k="area" value="' + esc(v.area) + '"/></div>'
+            + '<div' + (pct ? ' style="display:none"' : '') + '><div class="g2"><div><label>Área visada — coordenadas do centro (opcional)</label><input data-k="areaCoord" placeholder="38.7610, -9.1600" value="' + esc(v.areaCoord) + '"/></div><div><label>Raio aproximado da área (m)</label><input type="number" data-k="areaRaio" placeholder="200" value="' + esc(v.areaRaio) + '"/></div></div></div>'
+            + '<div class="g2" style="display:none"><div><label>Detetor anti-drone — local / coordenadas</label><input data-k="detCoord" value="' + esc(v.detCoord) + '"/></div><div><label>Raio de deteção (m)</label><input type="number" data-k="detRaio" value="' + esc(v.detRaio) + '"/></div></div>' + (pct ? '' : '<div class="nota" style="margin-top:6px">📍 Os locais de descolagem e de cada anti-drone estão nos cartões da secção 4.</div>') + '</section>'
+            + so(!eqp) + '<h2>7. Resultado</h2>'
+            + [["Det", "🛸 Deteção de drone(s)?", 1], ["Ini", "📡 Inibição de drone(s)?", 1], ["Out", "⚠️ Outras ocorrências?", 0]].map(function(q) {
+                return '<label>' + q[1] + ' ' + radio("oc" + q[0], v["oc" + q[0]]) + '</label>' + (q[2] ? '<input type="number" data-k="oc' + q[0] + 'Q" placeholder="Quantos?" value="' + esc(v["oc" + q[0] + "Q"]) + '" style="max-width:140px"/>' : '')
+                    + '<textarea data-k="oc' + q[0] + 'T" placeholder="Descrição (se Sim)">' + esc(v["oc" + q[0] + "T"]) + '</textarea>'; }).join("")
+            + '<div class="g2"><div><label>NPP / NUIPC</label><input data-k="npp" value="' + esc(v.npp) + '"/></div><div><label>Detenções / feridos civis / feridos PSP</label><div class="row"><input type="number" data-k="det" placeholder="Det." value="' + esc(v.det) + '"/><input type="number" data-k="ferC" placeholder="Civis" value="' + esc(v.ferC) + '"/><input type="number" data-k="ferP" placeholder="PSP" value="' + esc(v.ferP) + '"/></div></div></div>'
+            + '<label>Operação conjunta? ' + radio("opConj", v.opConj) + '</label><label>Policiamento desportivo? ' + radio("polDesp", v.polDesp) + '</label></section>'
+            + so(!eqp) + '<h2>8. Notas para o relato</h2><textarea data-k="notas" style="min-height:160px" placeholder="Quem contactou e a que horas, o que foi pedido, o que se observou, decisões apoiadas, dificuldades, quem deu por terminado…">' + esc(v.notas) + '</textarea></section>'
+            + '<div style="text-align:center;margin:16px"><button id="bExp2">💾 Guardar ficheiro</button> <button id="bPart2">📤 Partilhar (WhatsApp, Signal, e-mail…)</button></div><input type="file" id="fAbrir" accept=".json" style="display:none"/></main>';
+        renderEquipas(); renderLista("vts", S.viaturas, linhaViatura); renderLista("obs", S.observadores, linhaObs);
+        ligar();
+    }
+
+    // ── Fita da missão: fases com tarefas (o que fazer em cada momento) ──
+    var FASE_HORA = { "2. Saída da unidade": ["hSai", "🚐 Saímos — registar hora"], "3. Chegada ao local": ["hCheg", "📍 Chegámos ao local — registar hora"], "6. Fim no local": ["hSaiL", "🏁 Saímos do local — registar hora"], "7. Regresso": ["hReg", "🏢 Chegámos à unidade — registar hora"] };
+    function temANT() { return S.equipas.some(function(e) { return e.tipo !== "MNA"; }); }
+    function temAnti() { return !!S.levaAnti || matSel("an").length > 0 || S.equipas.some(function(e) { return (e.anti || []).length; }); }
+    function aplica(c) {
+        if (c === "Com Comandante do Policiamento") return S.cmd === "sim";
+        if (c === "Com voos de drone") return temANT() && !semVoos();
+        if (c === "Com anti-drone") return temAnti();
+        if (c === "Com Chefe de Equipa") return S.papel === "eq" || S.papel === "pct" || S.chefe === "sim";
+        if (c === "Missão MNA") return S.equipas.some(function(e) { return e.tipo === "MNA"; });
+        return true;
+    }
+    function textoTarefa(t) {
+        var h = function(v, alt) { return v ? v.substring(11, 16) : (alt || "__:__"); };
+        return t.replace("{inicio}", h(S.hCheg, D.pre && D.pre.hora)).replace("{fim}", h(S.hSaiL, D.pre && D.pre.horaFim));
+    }
+    function fases() {
+        var nomes = [];
+        (D.checklist || []).forEach(function(t) { if (nomes.indexOf(t.fase) < 0) nomes.push(t.fase); });
+        Object.keys(FASE_HORA).forEach(function(f) { if (nomes.indexOf(f) < 0) nomes.push(f); });
+        [["1.", "1. Antes de sair"], ["4.", "4. Voos"], ["5.", "5. Durante a missão"]].forEach(function(x) { if (!nomes.some(function(n) { return n.indexOf(x[0]) === 0; })) nomes.push(x[1]); });
+        nomes.sort();
+        if (semVoos()) nomes = nomes.filter(function(n) { return n.indexOf("4.") !== 0; });   // exposição: sem fase «Voos»
+        return nomes.map(function(f) {
+            var ts = (D.checklist || []).filter(function(t) { return t.fase === f && aplica(t.cond) && quemOk(t.quem); });
+            var hk = FASE_HORA[f];
+            var feita = (!hk || S[hk[0]]) && ts.every(function(t) { return S.chk && S.chk[t.id]; }) && (ts.length || hk);
+            var voos = faseVoos(f), diario = /^5\./.test(f);
+            if (voos && !ts.length) feita = !!S.hSaiL;
+            if (voos && emVoo()) feita = false;
+            if (diario) feita = !!S.hSaiL;
+            return { nome: f, tarefas: ts, hora: hk, feita: !!feita, voos: voos, diario: diario };
+        });
+    }
+    var PAPEIS = { eq: "👥 Equipa", pct: "🎯 PCT", solo: "🧩 Sozinha" };
+    function quemOk(q) {
+        if (!q || q === "Ambos" || S.papel === "solo") return true;
+        return (q === "Equipa" && S.papel === "eq") || (q === "Comandante do PCT" && S.papel === "pct");
+    }
+    function batDefeito() {
+        var usadas = {}; S.equipas.forEach(function(e) { (e.voos || []).forEach(function(v) { if (v.bt) usadas[String(v.bt)] = 1; }); });
+        return matSel("bt").filter(function(id) { return !usadas[id]; })[0] || "";
+    }
+    function htmlPapel() {
+        var ix = indice().sort(function(a, b) { return String(b.upd).localeCompare(String(a.upd)); });
+        var lista = ix.length ? '<section><h2>Fichas neste aparelho</h2><div class="nota" style="margin-bottom:6px">Cada ficha é independente. Escolha a sua para continuar.</div>'
+            + ix.map(function(x) {
+                return '<div class="row" style="margin:6px 0"><button class="bigb' + (x.uid === S.uid && S.papel ? '' : ' sec') + '" data-abrirficha="' + esc(x.uid) + '" style="margin:0">' + (PAPEIS[x.papel] || x.papel) + (x.nome ? ' — ' + esc(x.nome) : '')
+                    + '<br><small>alterada ' + esc(String(x.upd || "").replace("T", " ").substring(5, 16)) + (x.uid === S.uid && S.papel ? ' · aberta' : '') + '</small></button>'
+                    + '<button class="rem" data-apagarficha="' + esc(x.uid) + '" title="Apagar esta ficha deste aparelho">🗑</button></div>';
+            }).join("") + '</section>' : '';
+        return dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + '</h1></header><main>' + lista + '<section><h2>' + (ix.length ? 'Nova ficha — quem a vai usar?' : 'Quem vai usar esta ficha?') + '</h2>'
+            + '<div class="nota" style="margin-bottom:8px">A Equipa e o Comandante do PCT preenchem cada um a sua ficha; no RM importam-se as duas juntas e o RM cruza os dados (voos, horas). Se a equipa operar sem Chefe no PCT, escolha «Equipa sozinha».</div>'
+            + '<button class="bigb" data-papel="eq">👥 Equipa (pilotos)<br><small>material, voos (drone e bateria), locais</small></button>'
+            + '<button class="bigb" data-papel="pct">🎯 Comandante do PCT<br><small>contactos, tarefas, horas e missão de cada voo, ocorrências</small></button>'
+            + '<button class="bigb sec" data-papel="solo">🧩 Equipa sozinha (ficha completa)</button>'
+            + '<input type="file" id="fAbrir" accept=".json" style="display:none"/><button class="sec" id="bAbrir" style="margin-top:10px">📂 Abrir uma ficha exportada</button></section></main>';
+    }
+    function semVoos() { return (D.tiposSemMin || []).indexOf(S.tipo) > -1; }       // Exposição / Demonstração
+    function faseVoos(f) { return /^4\./.test(f) && temANT() && S.papel !== "pct" && !semVoos(); }
+    function emVoo() { return S.equipas.some(function(e) { return (e.voos || []).some(function(v) { return v.t1 && !v.t2; }); }); }
+    // ── Material a levar (identificar e testar) ──
+    function matSel(t) { return Object.keys(S.mat || {}).filter(function(k) { return k.indexOf(t + ":") === 0; }).map(function(k) { return k.substring(t.length + 1); }); }
+    function matNome(k) {
+        var t = k.split(":")[0], id = k.substring(t.length + 1);
+        if (t === "o") return id;
+        var l = t === "dr" ? D.drones : t === "bt" ? D.baterias : t === "an" ? D.anti : D.viaturas;
+        var x = l.filter(function(z) { return String(z.id) === id; })[0]; return x ? x.t : id;
+    }
+    function batsMat() {
+        var fams = matSel("dr").map(function(id) { var d = D.drones.filter(function(x) { return String(x.id) === id; })[0]; return d ? familia(d.t) : ""; });
+        return D.baterias.filter(function(b) { return !fams.length || !b.dr || fams.indexOf(familia(b.dr)) > -1 || (S.mat || {})["bt:" + b.id]; });
+    }
+    function matToggle(k) {
+        S.mat = S.mat || {};
+        var t = k.split(":")[0], id = k.substring(t.length + 1);
+        var eqA = S.equipas.filter(function(e) { return e.tipo !== "MNA"; })[0];
+        if (S.mat[k]) {
+            delete S.mat[k];
+            if (t === "an") S.equipas.forEach(function(e) { e.anti = (e.anti || []).filter(function(a) { return !(String(a.id) === id && !a.t1 && !a.t2 && !a.mi); }); });
+            if (t === "vt") S.viaturas = S.viaturas.filter(function(v) { return !(String(v.vid) === id && !v.km && !v.k1 && !v.k2); });
+        } else {
+            S.mat[k] = { test: "" };
+            if (t === "an" && eqA && !S.equipas.some(function(e) { return (e.anti || []).some(function(a) { return String(a.id) === id; }); })) eqA.anti.push({ id: id, t1: "", t2: "", mi: "" });
+            if (t === "vt" && !S.viaturas.some(function(v) { return String(v.vid) === id; })) S.viaturas.push({ vid: id, mat: "", km: "" });
+        }
+    }
+    function batsVoo(v) {
+        var dr = D.drones.filter(function(x) { return String(x.id) === String(v.dr); })[0];
+        var bats = dr ? D.baterias.filter(function(b) { return !b.dr || familia(b.dr) === familia(dr.t); }) : D.baterias;
+        var selB = matSel("bt");
+        if (selB.length) bats = bats.filter(function(b) { return selB.indexOf(String(b.id)) > -1 || String(b.id) === String(v.bt); });
+        return bats;
+    }
+    function droneDefeito(e) {
+        var u = (e.voos || []).filter(function(v) { return v.dr; }).pop(); if (u) return u.dr;
+        var m = matSel("dr").filter(function(id) { var d = D.drones.filter(function(x) { return String(x.id) === id; })[0]; return d && d.voo !== false; })[0]; if (m) return m;
+        var dv = D.drones.filter(function(x) { return x.voo !== false; }); return dv.length === 1 ? String(dv[0].id) : "";
+    }
+    function matHtml() {
+        S.mat = S.mat || {};
+        var chips = function(t, lista) { return '<div class="chips">' + lista.map(function(x) { var k = t + ":" + x.id; return '<button class="chip' + (S.mat[k] ? " on" : "") + '" data-mat="' + esc(k) + '">' + esc(x.t) + '</button>'; }).join("") + '</div>'; };
+        var bats = batsMat(), levo = Object.keys(S.mat);
+        return '<div class="mat"><div class="nota">Toque no material empenhado (o que vai para a missão).</div>'
+            + (D.drones.length ? '<b>Drones</b>' + chips("dr", D.drones) : '')
+            + (bats.length ? '<b>Baterias' + (matSel("dr").length ? ' (compatíveis)' : '') + ' <button class="sec" data-mattodas="bt" style="padding:3px 9px;font-size:12px">todas</button></b>' + chips("bt", bats) : '')
+            + (D.anti.length ? '<b>Anti-drone</b>' + chips("an", D.anti.map(function(x) { return { id: x.id, t: x.t + (x.cat ? " (" + x.cat + ")" : "") }; })) : '')
+            + (D.viaturas.length ? '<b>Viaturas</b>' + chips("vt", D.viaturas) : '')
+            + '<b>Outro material</b><div class="row"><input id="matOutro" placeholder="Ex.: comando 2, ecrã, rádio, cartões SD"/><button class="sec" id="bMatOutro" style="flex:0 0 auto">＋</button></div>'
+            + (levo.length ? '<b>Material empenhado (' + levo.length + ')</b><div class="nota" style="color:#1d2733">' + levo.filter(function(k) { return k.indexOf("o:") !== 0; }).map(function(k) { return esc(matNome(k)); }).join(" · ") + '</div>'
+                + levo.filter(function(k) { return k.indexOf("o:") === 0; }).map(function(k) {
+                    return '<div class="levo"><span>' + esc(matNome(k)) + '</span><button class="rem" data-matrem="' + esc(k) + '">✕</button></div>'; }).join("") : '')
+            + '</div>';
+    }
+    // ── Painel de voos (fase «Voos»): descolou / o que fez / aterrou ──
+    // Hora sempre visível (chip); tocar → campo de hora para corrigir
+    function hChip(attr, key, val) {
+        return '<button class="hchip" data-edh="' + attr + '" data-edk="' + esc(key) + '" data-edv="' + esc(val || "") + '">🕒 ' + esc(val || "--:--") + ' ✎</button>';
+    }
+    function vooCard(k, v, j) {
+        var noar = v.t1 && !v.t2;
+        return '<div class="voo vc' + (noar ? ' noar' : '') + '" data-vo="' + j + '"><div class="vh"><strong>Voo ' + (j + 1)
+            + (noar ? ' <span class="agora" style="background:#e65100">NO AR</span>' : (v.mi ? ' <span class="nota">· ' + esc(v.mi) + ' min</span>' : '')) + '</strong><button class="rem" data-rem-vo="' + j + '">✕</button></div>'
+            + '<div class="row hv"><label>🛫 Descolagem</label><input type="time" data-f="t1" value="' + esc(v.t1) + '"/><button class="ag" data-t="t1">Agora</button></div>'
+            + '<div class="row hv"><label>🛬 Aterragem</label><input type="time" data-f="t2" value="' + esc(v.t2) + '"/><button class="ag" data-t="t2">Agora</button></div>'
+            + '<input data-f="ob" placeholder="Missão do voo — o que fez" value="' + esc(v.ob) + '" style="margin-top:6px"/>'
+            + '<div class="g2t" style="margin-top:6px"><select data-f="dr">' + opts(D.drones, v.dr, "drone") + '</select><select data-f="bt">' + opts(batsVoo(v), v.bt, "bateria") + '</select></div>'
+            + '<input type="hidden" data-f="mi" value="' + esc(v.mi) + '"/>'
+            + (noar ? '<button class="bigb bAt" data-aterrou="' + k + ',' + j + '">🛬 Aterrou agora</button>' : '')
+            + '</div>';
+    }
+    // ── Posição GPS do telemóvel (local de descolagem, detetor) ──
+    // Coordenadas a partir de texto colado: «38.7, -9.1», links do Google Maps (@lat,lng · q=lat,lng · !3d..!4d..)
+    function coordDeTexto(t) {
+        t = String(t || "");
+        var m = t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || t.match(/@(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || t.match(/[?&](?:q|query|ll|center)=(-?\d+\.\d+)(?:,|%2C)\s*(-?\d+\.\d+)/i) || t.match(/(-?\d{1,2}\.\d{3,})\s*[,; ]\s*(-?\d{1,3}\.\d{3,})/);
+        if (!m) return "";
+        var la = parseFloat(m[1]), lo = parseFloat(m[2]);
+        if (isNaN(la) || isNaN(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return "";
+        return la.toFixed(6) + ", " + lo.toFixed(6);
+    }
+    function posGet(k) {
+        var p = String(k).split(":");
+        if (p[0] === "eq") { var e = S.equipas[+p[1]] || {}; return { v: e.dc || "", prec: e.dcPrec }; }
+        if (p[0] === "an") { var a = ((S.equipas[+p[1]] || {}).anti || [])[+p[2]] || {}; return { v: a.c || "", prec: a.cPrec }; }
+        return { v: S[k] || "", prec: S[k + "Prec"] };
+    }
+    function posSet(k, v, prec) {
+        var p = String(k).split(":");
+        if (p[0] === "eq") { var e = S.equipas[+p[1]]; if (e) { e.dc = v; e.dcPrec = prec || ""; } return; }
+        if (p[0] === "an") { var a = ((S.equipas[+p[1]] || {}).anti || [])[+p[2]]; if (a) { a.c = v; a.cPrec = prec || ""; } return; }
+        S[k] = v; S[k + "Prec"] = prec || "";
+    }
+    function gpsHtml(k, rot) {
+        var _pg = posGet(k), v = _pg.v, prec = _pg.prec;
+        return '<div class="gps"><button class="sec" data-gps="' + k + '" style="width:100%">' + rot + '</button>'
+            + (S._gpsFalhou ? '<div class="nota" style="margin-top:4px">Sem localização neste modo de abertura. Alternativa: <a href="https://www.google.com/maps" target="_blank">abrir o Maps</a>, manter premido no sítio onde está (aparece um pin e as coordenadas na caixa de pesquisa), tocar nas coordenadas para copiar e colar aqui:</div>'
+                + '<input data-gpscola="' + k + '" placeholder="Colar coordenadas ou link do Maps" style="margin-top:4px"/>' : '')
+            + (v ? '<div class="nota">✔ ' + esc(v) + (prec ? ' (±' + prec + ' m)' : '') + ' · <a href="https://www.google.com/maps?q=' + encodeURIComponent(v) + '" target="_blank">ver no mapa</a></div>' : '') + '</div>';
+    }
+    function lerGPS(k) {
+        if (!navigator.geolocation || window.isSecureContext === false) { S._gpsFalhou = true; render(); return; }   // ex.: aberto a partir do WhatsApp → colar do Maps
+        var el = document.querySelector('[data-gps="' + k + '"]'); if (el) { el.disabled = true; el.textContent = "⏳ A obter a posição…"; }
+        navigator.geolocation.getCurrentPosition(function(p) {
+            lerCampos();
+            posSet(k, p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6), Math.round(p.coords.accuracy || 0));
+            render(); guardar();
+        }, function(e) {
+            S._gpsFalhou = true;
+            if (e.code !== 1) alert("Não foi possível obter a posição (" + (e.message || "sem sinal") + "). Tente ao ar livre, ou use o Maps e cole as coordenadas.");
+            render();
+        }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+    }
+    function voosHtml() {
+        var eqs = []; S.equipas.forEach(function(e, k) { if (e.tipo !== "MNA") eqs.push(k); });
+        if (!eqs.length) return "";
+        var h = '<div class="pv">';
+        eqs.forEach(function(k) {
+            var e = S.equipas[k], nm = eqs.length > 1 ? " (Equipa " + (k + 1) + ")" : "";
+            h += gpsHtml("eq:" + k + ":desc", "🛫 Estou no local de descolagem" + nm + " — gravar posição");
+            (e.anti || []).forEach(function(a, j) {
+                if (!a.id) return;
+                var x = D.anti.filter(function(z) { return String(z.id) === String(a.id); })[0] || {};
+                h += gpsHtml("an:" + k + ":" + j, (/jammer|inibi/i.test(x.cat || "") ? "🚫" : "📡") + " Estou junto ao " + (x.t || "anti-drone") + " — gravar posição");
+            });
+        });
+        h += '<div class="nota">1 bateria = 1 voo. «Descolou agora» abre o voo com a hora; tudo pode ser corrigido depois (horas, missão, drone, bateria).</div>';
+        eqs.forEach(function(k) {
+            var e = S.equipas[k], nm = eqs.length > 1 ? " — Equipa " + (k + 1) : "";
+            var tot = 0; (e.voos || []).forEach(function(v) { tot += +v.mi || 0; });
+            h += '<div data-eq="' + k + '">' + (nm ? '<strong>Equipa ' + (k + 1) + '</strong>' : '')
+                + e.voos.map(function(v, j) { return vooCard(k, v, j); }).join("")
+                + '<button class="bigb" data-descolou="' + k + '">🛫 Descolou agora' + nm + '</button>'
+                + '<button class="sec" data-add-vo="' + k + '" style="width:100%">＋ Voo sem hora (preencher à mão)</button>'
+                + (e.voos.length ? '<div class="nota" style="margin-top:4px"><strong>✈️ ' + e.voos.length + ' voo' + (e.voos.length > 1 ? 's' : '') + ' · ' + tot + ' min</strong></div>' : '')
+                + '</div>';
+        });
+        return h + '</div>';
+    }
+    // ── Diário da missão (escrita livre com hora) — entra na fita do tempo do RM ──
+    function diarioHtml() {
+        S.diario = S.diario || [];
+        return '<div class="pv"><div class="nota">Aponte o que for relevante (pedidos, contactos, deteções, autuações, problemas). Fica com a hora, que pode corrigir.</div>'
+            + '<textarea id="diTxt" placeholder="O que aconteceu?" style="min-height:60px;margin-top:6px"></textarea>'
+            + '<button class="bigb" id="bDiario">📝 Registar com a hora atual</button>'
+            + S.diario.map(function(d, i) {
+                return '<div class="di" data-di="' + i + '"><div class="row">' + hChip("data-dih", i, d.h) + '<span style="flex:1"></span><button class="rem" data-direm="' + i + '">✕</button></div>'
+                    + '<textarea data-dit="' + i + '" style="min-height:44px;margin-top:4px">' + esc(d.t) + '</textarea></div>'; }).join("")
+            + '</div>';
+    }
+    function fitaHtml() {
+        S.chk = S.chk || {};
+        var fs = fases(), atual = -1;
+        fs.forEach(function(f, i) { if (atual < 0 && !f.feita) atual = i; });
+        var feitas = fs.filter(function(f) { return f.feita; }).length;
+        var selTipo = D.tipos && D.tipos.length ? '<label style="margin-top:0">Tipo de serviço</label><select data-k="tipo" style="margin-bottom:8px"><option value=""></option>' + D.tipos.map(function(t) { return '<option' + (S.tipo === t ? " selected" : "") + '>' + esc(t) + '</option>'; }).join("") + '</select>' : '';
+        return '<section id="secFita">' + selTipo + '<h2>🧭 Fita da missão <span class="nota" style="font-weight:normal">(' + feitas + '/' + fs.length + ' fases)</span></h2>'
+            + '<div class="nota" style="margin-bottom:6px">O que fazer em cada momento. As tarefas marcadas ficam com a hora e entram no RM.</div>'
+            + fs.map(function(f, i) {
+                var hv = f.hora && S[f.hora[0]] ? S[f.hora[0]].substring(11, 16) : "";
+                var nv = 0, mv = 0, noAr = false;
+                if (f.voos) S.equipas.forEach(function(e) { (e.voos || []).forEach(function(v) { if (v.t1 && !v.t2) noAr = true; else if (v.t1 || +v.mi) { nv++; mv += +v.mi || 0; } }); });
+                var aberta = i === atual || (!f.feita && i < atual + 2) || ((f.voos || f.diario) && S.hCheg && !S.hSaiL);
+                return '<details class="fase' + (i === atual ? " atual" : "") + (f.feita ? " feita" : "") + '"' + (aberta ? " open" : "") + '>'
+                    + '<summary><span>' + (f.feita ? "✔ " : "") + esc(f.nome.replace(/^\d+\.\s*/, "")) + (hv ? " — " + hv : "") + (nv ? " — " + nv + " voo" + (nv > 1 ? "s" : "") + " · " + mv + " min" : "") + (f.diario && (S.diario || []).length ? " — " + S.diario.length + " registo" + (S.diario.length > 1 ? "s" : "") : "") + '</span>'
+                    + (noAr ? '<span class="agora" style="background:#e65100">NO AR</span>' : (i === atual ? '<span class="agora">AGORA</span>' : '')) + '</summary>'
+                    + (/^1\./.test(f.nome) && S.papel !== "pct" ? matHtml() : '')
+                    + f.tarefas.map(function(t) {
+                        var feito = S.chk[t.id];
+                        return '<label class="tar' + (feito ? " feita" : "") + '"><input type="checkbox" data-chk="' + esc(t.id) + '"' + (feito ? " checked" : "") + '/><span>' + esc(textoTarefa(t.t)) + '</span>' + (feito ? hChip("data-chkh", t.id, feito) : '') + '</label>';
+                    }).join("")
+                    + (f.voos ? voosHtml() : '') + (f.diario ? diarioHtml() : '')
+                    + (f.hora ? (hv ? '<div class="fh">🕒 ' + esc(f.hora[1].replace(/ — registar hora$/, "")) + ' às ' + hChip("data-fh", f.hora[0], hv) + '</div>'
+                                    : '<button class="btnFase" data-agora="' + f.hora[0] + '">' + f.hora[1] + '</button>') : '')
+                    + '</details>';
+            }).join("") + '</section>';
+    }
+    function renderLista(id, arr, f) { $(id).innerHTML = arr.map(f).join(""); }
+    function linhaViatura(x, i) { return '<div class="row" data-vt="' + i + '"><select data-f="vid">' + opts(D.viaturas, x.vid, "— viatura —") + '<option value="outra"' + (x.vid === "outra" ? " selected" : "") + '>Outra…</option></select><input data-f="mat" placeholder="Matrícula (se Outra)" value="' + esc(x.mat) + '"/><input type="number" data-f="km" placeholder="Km percorridos" value="' + esc(x.km != null && x.km !== "" ? x.km : ((+x.k2 || 0) - (+x.k1 || 0) > 0 ? (+x.k2) - (+x.k1) : "")) + '"/><button class="rem" data-rem-vt="' + i + '">✕</button></div>'; }
+    function linhaObs(x, i) { return '<div class="row" data-ob="' + i + '">' + pessoaInput(x.p) + '<button class="rem" data-rem-ob="' + i + '">✕</button></div>'; }
+    function renderEquipas() {
+        $("eqs").innerHTML = S.equipas.map(function(e, k) {
+            var h = '<div class="eq" data-eq="' + k + '"><div class="row"><strong>Equipa ' + (k + 1) + ' (' + (e.tipo === "MNA" ? "MNA" : "ANT") + ')</strong><button class="rem" data-rem-eq="' + k + '" style="flex:0 0 auto">Remover equipa</button></div>';
+            if (k === 0 && S.prePessoas && S.prePessoas.length && !e.pessoas.some(function(p) { return p.p; }))
+                h += '<button class="sec" data-prepes="1" style="width:100%;margin:4px 0">👥 Usar os nomeados do pedido (' + S.prePessoas.length + ')</button>';
+            h += '<label>' + (e.tipo === "MNA" ? "Tripulantes" : "Pilotos") + ' / apoio</label>' + e.pessoas.map(function(p, j) {
+                return '<div class="row" data-pe="' + j + '"><select data-f="fun" style="flex:0 0 120px"><option value="p"' + (p.fun !== "a" ? " selected" : "") + '>' + (e.tipo === "MNA" ? "Tripulante" : "Piloto") + '</option><option value="a"' + (p.fun === "a" ? " selected" : "") + '>Apoio</option></select>' + pessoaInput(p.p) + '<button class="rem" data-rem-pe="' + j + '">✕</button></div>'; }).join("")
+                + '<button class="sec" data-add-pe="' + k + '">＋ Pessoa</button>';
+            if (e.tipo === "MNA") {
+                h += '<label>Embarcação</label><select data-f="emb">' + opts(D.embarcacoes, e.emb) + '</select>';
+            } else {
+                h += '<div class="voo vc" style="margin-top:8px"><strong>🛫 Local de descolagem</strong>'
+                    + '<label>Nome do local</label><input data-f="dn" placeholder="ex.: Escola Alemã" value="' + esc(e.dn || (k === 0 ? S.descNome : "") || "") + '"/>'
+                    + '<label>Coordenadas</label><input data-f="dc" placeholder="38.7223, -9.1393 ou colar link do Maps" value="' + esc(e.dc || (k === 0 ? S.descCoord : "") || "") + '"/>'
+                    + gpsHtml("eq:" + k + ":desc", "📍 Estou aqui — gravar posição") + '</div>';
+                h += '<div class="nota" style="margin:8px 0">✈️ Os voos registam-se na fita, fase «Voos» (' + (e.voos || []).length + ' registado' + ((e.voos || []).length === 1 ? '' : 's') + ').</div>'
+                    + '<label>Anti-drone (cada equipamento no seu local)</label>' + e.anti.map(function(a, j) {
+                        var x = D.anti.filter(function(z) { return String(z.id) === String(a.id); })[0] || {};
+                        var jam = /jammer|inibi/i.test(x.cat || "");
+                        return '<div class="voo vc" data-an="' + j + '"><div class="vh"><select data-f="id" style="flex:1">' + opts(D.anti.map(function(z) { return { id: z.id, t: z.t + (z.cat ? " (" + z.cat + ")" : "") }; }), a.id, "anti-drone") + '</select><button class="rem" data-rem-an="' + j + '">✕</button></div>'
+                            + '<div class="row hv"><label>▶ Ligado</label><input type="time" data-f="t1" value="' + esc(a.t1) + '"/><button class="ag" data-t="t1">Agora</button></div>'
+                            + '<div class="row hv"><label>■ Desligado</label><input type="time" data-f="t2" value="' + esc(a.t2) + '"/><button class="ag" data-t="t2">Agora</button></div>'
+                            + '<input type="hidden" data-f="mi" value="' + esc(a.mi) + '"/>'
+                            + '<label>📍 Local — coordenadas</label><input data-f="c" placeholder="38.7223, -9.1393 ou colar link do Maps" value="' + esc(a.c || "") + '"/>'
+                            + (jam ? '<input type="hidden" data-f="r" value=""/>' : '<label>Raio de deteção (m)</label><input type="number" data-f="r" placeholder="' + (x.alc ? x.alc + " (do equipamento)" : "ex.: 2000") + '" value="' + esc(a.r || "") + '"/>')
+                            + (a.id ? gpsHtml("an:" + k + ":" + j, "📍 Estou junto a este equipamento — gravar posição") : '')
+                            + '</div>'; }).join("")
+                    + '<button class="sec" data-add-an="' + k + '">＋ Anti-drone</button>';
+            }
+            return h + '</div>';
+        }).join("");
+    }
+    // Cada ficha (Equipa 1, Equipa 2, PCT…) é guardada à parte — no mesmo telemóvel não se misturam
+    var IDX = "GOMTI_FICHAS|" + D.codigo + "|" + D.gerado, mostrarEscolha = false;
+    function lsGet(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch(e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
+    function chaveDe(uid) { return "GOMTI_FICHA|" + D.gerado + "|" + uid; }
+    function indice() { return lsGet(IDX) || []; }
+    function novoS() { return { equipas: [], viaturas: [], observadores: [], uid: Date.now().toString(36) + Math.random().toString(36).substring(2, 7) }; }
+    function resumoFicha(x) {
+        var p1 = (((x.equipas || [])[0] || {}).pessoas || []).map(function(p) { return String(p.p || "").replace(/^\d+\s*—\s*/, ""); }).filter(Boolean)[0] || "";
+        return (x.nomeFich || "") || [x.papel === "pct" ? (x.chefeP ? String(x.chefeP).replace(/^\d+\s*—\s*/, "") : "") : p1].filter(Boolean).join(" ");
+    }
+    function guardar() {
+        if (S.papel) {
+            lsSet(chaveDe(S.uid), S);
+            var ix = indice().filter(function(x) { return x.uid !== S.uid; });
+            ix.push({ uid: S.uid, papel: S.papel, nome: resumoFicha(S), upd: agora() });
+            lsSet(IDX, ix);
+        }
+        var el = $("estado"); if (el) el.textContent = "Guardado automaticamente neste telemóvel às " + hora() + ". «💾 Guardar ficheiro» para importar no RM ou continuar noutro aparelho.";
+    }
+    function lerCampos() {
+        [].forEach.call(document.querySelectorAll("[data-k]"), function(el) { S[el.getAttribute("data-k")] = el.value; });
+        ["cmd", "chefe", "ocDet", "ocIni", "ocOut", "opConj", "polDesp"].forEach(function(n) {
+            if (!document.querySelector('input[name="' + n + '"]')) return;   // secção escondida / ecrã do papel — manter o valor
+            var r = document.querySelector('input[name="' + n + '"]:checked'); S[n] = r ? r.value : ""; });
+        [].forEach.call(document.querySelectorAll("[data-eq]"), function(eqEl) {
+            var e = S.equipas[+eqEl.getAttribute("data-eq")];
+            [].forEach.call(eqEl.querySelectorAll("[data-pe]"), function(r) { var p = e.pessoas[+r.getAttribute("data-pe")]; p.fun = r.querySelector('[data-f="fun"]').value; p.p = r.querySelector('[data-f="pessoa"]').value; });
+            var em = eqEl.querySelector('[data-f="emb"]'); if (em) e.emb = em.value;
+            [].forEach.call(eqEl.querySelectorAll("[data-vo]"), function(r) { var v = e.voos[+r.getAttribute("data-vo")]; ["dr", "bt", "t1", "t2", "mi", "ob"].forEach(function(f) { v[f] = r.querySelector('[data-f="' + f + '"]').value; }); });
+            [].forEach.call(eqEl.querySelectorAll("[data-an]"), function(r) { var a = e.anti[+r.getAttribute("data-an")]; ["id", "t1", "t2", "mi", "c", "r"].forEach(function(f) { var x = r.querySelector('[data-f="' + f + '"]'); if (x) a[f] = x.value; }); });
+            var dn = eqEl.querySelector('[data-f="dn"]'), dc = eqEl.querySelector('[data-f="dc"]'); if (dn) e.dn = dn.value; if (dc) e.dc = dc.value;
+        });
+        [].forEach.call(document.querySelectorAll("[data-vt]"), function(r) { var x = S.viaturas[+r.getAttribute("data-vt")]; ["vid", "mat", "km"].forEach(function(f) { x[f] = r.querySelector('[data-f="' + f + '"]').value; }); });
+        [].forEach.call(document.querySelectorAll("[data-ob]"), function(r) { S.observadores[+r.getAttribute("data-ob")].p = r.querySelector('[data-f="pessoa"]').value; });
+    }
+    function ligar() {
+        var app = $("app");
+        app.oninput = app.onchange = function(ev) {
+            if (ev.target.hasAttribute && ev.target.hasAttribute("data-chk")) {
+                if (ev.type !== "change") return;
+                lerCampos();
+                var id = ev.target.getAttribute("data-chk");
+                if (ev.target.checked) S.chk[id] = hora(); else delete S.chk[id];
+                render(); guardar(); return;
+            }
+            var at = function(a) { return ev.target.getAttribute ? ev.target.getAttribute(a) : null; };
+            if (at("data-fh")) {           // hora da fase (editável)
+                if (ev.type !== "change") return;
+                lerCampos();
+                var fk = at("data-fh"), base = (S[fk] || S.hCheg || S.hSai || agora()).substring(0, 10);
+                S[fk] = ev.target.value ? base + "T" + ev.target.value : "";
+                render(); guardar(); return;
+            }
+            if (at("data-chkh")) { if (ev.type !== "change") return; lerCampos(); S.chk[at("data-chkh")] = ev.target.value || hora(); render(); guardar(); return; }
+            if (at("data-test")) { if (ev.type !== "change") return; lerCampos(); S.mat[at("data-test")].test = ev.target.checked ? hora() : ""; render(); guardar(); return; }
+            if (at("data-testh")) { if (ev.type !== "change") return; lerCampos(); S.mat[at("data-testh")].test = ev.target.value || hora(); render(); guardar(); return; }
+            if (at("data-dih")) { if (ev.type !== "change") return; S.diario[+at("data-dih")].h = ev.target.value; S.diario.sort(function(x, y) { return String(x.h).localeCompare(String(y.h)); }); lerCampos(); render(); guardar(); return; }
+            if (at("data-dit")) { S.diario[+at("data-dit")].t = ev.target.value; guardar(); return; }
+            if (ev.target.id === "diTxt") return;
+            if (ev.target.id === "matOutro") return;
+            if (at("data-gpscola")) {
+                var cc = coordDeTexto(ev.target.value); if (!cc) return;
+                lerCampos(); posSet(at("data-gpscola"), cc, ""); render(); guardar(); return;
+            }
+            if (ev.type === "change" && /^(dc|c)$/.test(at("data-f") || "")) { var c3 = coordDeTexto(ev.target.value); if (c3 && c3 !== ev.target.value) ev.target.value = c3; }
+            if (ev.type === "change" && /^(descCoord|detCoord|areaCoord)$/.test(at("data-k") || "")) {
+                var c2 = coordDeTexto(ev.target.value); if (c2 && c2 !== ev.target.value) ev.target.value = c2;   // aceita links do Maps
+            }
+            var r = ev.target.closest(".voo");
+            if (r && (ev.target.getAttribute("data-f") === "t1" || ev.target.getAttribute("data-f") === "t2")) {
+                var m = mins(r.querySelector('[data-f="t1"]').value, r.querySelector('[data-f="t2"]').value);
+                if (m !== "") r.querySelector('[data-f="mi"]').value = m;
+            }
+            lerCampos();
+            if (ev.type === "change" && (ev.target.getAttribute("data-f") === "dr" || (ev.target.getAttribute("data-f") === "id" && ev.target.closest("[data-an]")))) { lerCampos(); render(); guardar(); return; }   // baterias compatíveis
+            if (ev.type === "change" && at("data-k") === "tipo") { lerCampos(); render(); guardar(); return; }
+            if (ev.type === "change" && (/^(cmd|chefe)$/.test(ev.target.name || "") || /^h(Sai|Cheg|SaiL|Reg)$/.test(at("data-k") || "") || (r && /^(t1|t2|mi|dr|bt)$/.test(at("data-f") || "")))) {
+                var f = $("secFita"); if (f) f.outerHTML = fitaHtml();        // fita acompanha horas e voos alterados nas secções
+            }
+            guardar();
+        };
+        app.onclick = function(ev) {
+            var b = ev.target.closest("button"); if (!b) return;
+            lerCampos();
+            var g = function(a) { return b.getAttribute(a); };
+            var eqEl = b.closest("[data-eq]"), e = eqEl ? S.equipas[+eqEl.getAttribute("data-eq")] : null;
+            if (g("data-abrirficha")) {
+                var sx = lsGet(chaveDe(g("data-abrirficha")));
+                if (sx) { S = sx; prepararS(); } mostrarEscolha = false; render(); return;
+            }
+            if (g("data-apagarficha")) {
+                var ua = g("data-apagarficha");
+                if (!confirm("Apagar esta ficha deste aparelho? (Se já a guardou ou partilhou, o ficheiro .json continua a servir.)")) return;
+                try { localStorage.removeItem(chaveDe(ua)); } catch(e) {}
+                lsSet(IDX, indice().filter(function(x) { return x.uid !== ua; }));
+                if (S.uid === ua) S = novoS();
+                render(); return;
+            }
+            if (g("data-papel")) {
+                if (S.papel) { S = novoS(); }                                   // nova ficha — a actual fica guardada à parte
+                mostrarEscolha = false;
+                S.papel = g("data-papel");
+                prepararS();
+                if (S.papel === "pct") S.chefe = "sim";                        // quem usa a ficha do PCT é o Chefe de Equipa
+                render(); guardar(); return;
+            }
+            if (b.id === "bHome") { lerCampos(); guardar(); if (window.GOMTI_HOME) window.GOMTI_HOME(); return; }
+            if (b.id === "bAlto") { S.alto = !S.alto; document.body.classList.toggle("alto", !!S.alto); guardar(); return; }
+            if (b.id === "bPapel") { lerCampos(); guardar(); mostrarEscolha = true; render(); return; }      // ver/trocar de ficha (nada se perde)
+            if (g("data-agora")) { S[g("data-agora")] = agora(); render(); guardar(); return; }
+            if (g("data-mat")) { matToggle(g("data-mat")); render(); guardar(); return; }
+            if (g("data-prepes")) {
+                var e0 = S.equipas[0];
+                e0.pessoas = S.prePessoas.map(function(p) { return { fun: "p", p: p }; });
+                if (S.papel === "pct" || S.papel === "solo") {
+                    // o próprio Chefe não entra como piloto: sai da lista se for o Chefe indicado
+                    var cp = String(S.chefeP || "").replace(/^\d+\s*—\s*/, "").toLowerCase();
+                    if (cp) e0.pessoas = e0.pessoas.filter(function(p) { return String(p.p).replace(/^\d+\s*—\s*/, "").toLowerCase() !== cp; });
+                }
+                render(); guardar(); return;
+            }
+            if (g("data-mattodas")) {
+                S.mat = S.mat || {};
+                var bs = batsMat(), todas = bs.every(function(x) { return S.mat["bt:" + x.id]; });
+                bs.forEach(function(x) { var kk = "bt:" + x.id; if (todas) delete S.mat[kk]; else if (!S.mat[kk]) S.mat[kk] = { test: "" }; });
+                render(); guardar(); return;
+            }
+            if (g("data-matrem")) { ev.preventDefault(); delete S.mat[g("data-matrem")]; render(); guardar(); return; }
+            if (b.id === "bMatOutro") { var mo = $("matOutro").value.trim(); if (mo) { S.mat = S.mat || {}; S.mat["o:" + mo] = { test: "" }; } render(); guardar(); return; }
+            if (g("data-gps")) { lerGPS(g("data-gps")); return; }
+            if (g("data-edh")) {                       // chip de hora → campo editável
+                ev.preventDefault();
+                var hi = document.createElement("input"); hi.type = "time"; hi.className = "hh";
+                hi.setAttribute(g("data-edh"), g("data-edk")); hi.value = g("data-edv") || "";
+                b.parentNode.replaceChild(hi, b); hi.focus();
+                try { if (hi.showPicker) hi.showPicker(); } catch (ePk) {}
+                return;
+            }
+            if (b.id === "bDiario") {
+                var tx = ($("diTxt").value || "").trim(); if (!tx) { $("diTxt").focus(); return; }
+                S.diario = S.diario || []; S.diario.push({ h: hora(), t: tx });
+                S.diario.sort(function(x, y) { return String(x.h).localeCompare(String(y.h)); });
+                render(); guardar(); return;
+            }
+            if (g("data-direm") !== null) { if (confirm("Apagar este registo?")) { S.diario.splice(+g("data-direm"), 1); render(); guardar(); } return; }
+            if (g("data-descolou") !== null) {
+                var ed = S.equipas[+g("data-descolou")];
+                ed.voos.push({ dr: droneDefeito(ed), bt: S.papel !== "pct" ? batDefeito() : "", t1: hora(), t2: "", mi: "", ob: "" });
+                render(); guardar(); return;
+            }
+            if (g("data-aterrou")) {
+                var pa = g("data-aterrou").split(","), va = S.equipas[+pa[0]].voos[+pa[1]];
+                va.t2 = hora(); va.mi = String(mins(va.t1, va.t2));
+                render(); guardar(); return;
+            }
+            if (g("data-t")) { var row = b.closest(".voo"); var inp = row.querySelector('[data-f="' + g("data-t") + '"]'); inp.value = hora(); inp.dispatchEvent(new Event("input", { bubbles: true })); return; }
+            if (b.id === "bEqA" || b.id === "bEqM") S.equipas.push({ tipo: b.id === "bEqM" ? "MNA" : "ANT", pessoas: [{ fun: "p", p: "" }, { fun: "p", p: "" }], voos: [], anti: [] });
+            else if (g("data-rem-eq") !== null && confirm("Remover a equipa?")) S.equipas.splice(+g("data-rem-eq"), 1);
+            else if (g("data-add-pe") !== null) e.pessoas.push({ fun: "p", p: "" });
+            else if (g("data-rem-pe") !== null) e.pessoas.splice(+g("data-rem-pe"), 1);
+            else if (g("data-add-vo") !== null) e.voos.push({ dr: droneDefeito(e), bt: "", t1: "", t2: "", mi: "", ob: "" });
+            else if (g("data-rem-vo") !== null) e.voos.splice(+g("data-rem-vo"), 1);
+            else if (g("data-add-an") !== null) e.anti.push({ id: "", t1: "", t2: "", mi: "" });
+            else if (g("data-rem-an") !== null) e.anti.splice(+g("data-rem-an"), 1);
+            else if (b.id === "bVt") S.viaturas.push({ vid: "", mat: "", km: "" });
+            else if (g("data-rem-vt") !== null) S.viaturas.splice(+g("data-rem-vt"), 1);
+            else if (b.id === "bOb") S.observadores.push({ p: "" });
+            else if (g("data-rem-ob") !== null) S.observadores.splice(+g("data-rem-ob"), 1);
+            else if (b.id === "bExp" || b.id === "bExp2") { exportar(); return; }
+            else if (b.id === "bPart" || b.id === "bPart2") { exportar(true); return; }
+            else if (b.id === "bAbrir") { $("fAbrir").click(); return; }
+            else return;
+            render(); guardar();
+        };
+        $("fAbrir").onchange = function() {
+            var f = this.files[0]; if (!f) return;
+            var rd = new FileReader(); rd.onload = function() { try { var j = JSON.parse(rd.result); if (j.ficha) { S = j.ficha; if (!S.uid) S.uid = j.uid || (Date.now().toString(36)); mostrarEscolha = false; prepararS(); render(); guardar(); $("estado").textContent = "📂 Aberta a ficha guardada em " + String(j.exportado || "").replace("T", " ").substring(0, 16) + " — continue a preencher."; } else alert("Ficheiro inválido."); } catch(e) { alert("Ficheiro inválido."); } };
+            rd.readAsText(f);
+        };
+    }
+    function nomeSugerido() {
+        var dia = (S.hSai || S.hCheg || agora()).substring(0, 10);
+        var sitio = S.local || S.descNome || "";
+        return [D.codigo, dia, sitio, { eq: "Equipa", pct: "PCT", solo: "Completa" }[S.papel] || ""].filter(Boolean).join("_");
+    }
+    function nomeLimpo(n) { return String(n || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\.json$/i, "").replace(/[\\/:*?"<>|]+/g, "").replace(/\s+/g, "_").substring(0, 80); }
+    var fichHandle = null;          // Chrome no PC: grava sempre por cima do mesmo ficheiro
+    function exportar(partilhar) {
+        lerCampos(); guardar();
+        var tarefas = {};
+        (D.checklist || []).forEach(function(t) { if (S.chk && S.chk[t.id]) tarefas[t.id] = { fase: t.fase, t: textoTarefa(t.t), hora: S.chk[t.id] }; });
+        var material = Object.keys(S.mat || {}).map(function(k) { return { k: k, t: matNome(k), test: S.mat[k].test || "" }; });
+        var out = { tipo: "GOMTI_FICHA_RM", v: 1, uid: S.uid, papel: S.papel || "solo", codigo: D.codigo, modo: D.modo, gerado: D.gerado, exportado: new Date().toISOString(), drones: D.drones, baterias: D.baterias, anti: D.anti, viaturas: D.viaturas, embarcacoes: D.embarcacoes, tarefas: tarefas, material: material, ficha: S };
+        if (!nomeLimpo(S.nomeFich)) { S.nomeFich = nomeSugerido(); var ni = document.querySelector('[data-k="nomeFich"]'); if (ni) ni.value = S.nomeFich; guardar(); }
+        var nome = nomeLimpo(S.nomeFich) + ".json";
+        var txt = JSON.stringify(out, null, 1);
+        var feito = function(msg) { $("estado").textContent = msg; };
+        if (partilhar) {
+            // Partilha do telemóvel (WhatsApp, Signal, e-mail, Drive…) — o destino escolhe-se no menu do sistema
+            var fich = null;
+            try { fich = new File([txt], nome, { type: "application/json" }); } catch (eF) {}
+            if (fich && navigator.canShare && navigator.canShare({ files: [fich] })) {
+                navigator.share({ files: [fich], title: nome, text: "Ficha de missão " + D.codigo + " (" + ({ eq: "Equipa", pct: "Comandante do PCT", solo: "completa" }[S.papel] || "") + ") — importar no RM com «📥 Importar ficha»." })
+                    .then(function() { feito("📤 Partilhada: " + nome + " (" + hora() + ")."); })
+                    .catch(function(e) { if (!e || e.name !== "AbortError") { descarregar(); feito("⚠️ Não foi possível partilhar — ficheiro guardado em Transferências (" + nome + "); envie-o a partir daí."); } });
+                return;
+            }
+            descarregar();
+            feito("⚠️ Este navegador não permite partilhar ficheiros — ficou guardado em Transferências: " + nome + ". Partilhe-o a partir da app Ficheiros/Transferências.");
+            return;
+        }
+        if (window.showSaveFilePicker && window.isSecureContext !== false) {
+            var escrever = function(h) { return h.createWritable().then(function(w) { return w.write(txt).then(function() { return w.close(); }); }).then(function() { fichHandle = h; feito("✅ Gravado por cima de «" + h.name + "» às " + hora() + "."); }); };
+            (fichHandle ? Promise.resolve(fichHandle) : window.showSaveFilePicker({ suggestedName: nome, types: [{ description: "Ficha do RM", accept: { "application/json": [".json"] } }] }))
+                .then(escrever).catch(function(e) { if (e && e.name !== "AbortError") descarregar(); });
+            return;
+        }
+        descarregar();
+        function descarregar() {
+            var blob = new Blob([txt], { type: "application/json" });
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) { window.navigator.msSaveOrOpenBlob(blob, nome); return; }
+            var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome; document.body.appendChild(a); a.click();
+            setTimeout(function() { a.remove(); }, 1000);
+            feito("✅ Guardado em Transferências: " + nome + " (" + hora() + "). Se já existia, o telemóvel cria «" + nomeLimpo(S.nomeFich) + " (1).json» — no RM use o mais recente (o RM ignora as versões antigas da mesma ficha).");
+        }
+    }
+    // ficha antiga (uma só por aparelho) → passa para a lista
+    var leg = lsGet(CHAVE);
+    if (leg) { if (!leg.uid) leg.uid = novoS().uid; if (leg.papel) { lsSet(chaveDe(leg.uid), leg); var ixl = indice().filter(function(x) { return x.uid !== leg.uid; }); ixl.push({ uid: leg.uid, papel: leg.papel, nome: resumoFicha(leg), upd: agora() }); lsSet(IDX, ixl); } try { localStorage.removeItem(CHAVE); } catch(e) {} }
+    var ix0 = indice();
+    S = (ix0.length === 1 && lsGet(chaveDe(ix0[0].uid))) || novoS();      // uma só ficha → abre-a; várias → escolher
+    prepararS();
+    render();
+    function prepararS() {
+    S.equipas = S.equipas || []; S.viaturas = S.viaturas || []; S.observadores = S.observadores || [];
+    document.body.classList.toggle("alto", !!S.alto);
+    if (D.pre && !S.preAplicado) {                 // pedido escolhido ao gerar a ficha (só na 1.ª abertura)
+        var P = D.pre; S.preAplicado = true;
+        S.sol = S.sol || String(P.sol); S.ent = S.ent || P.ent; S.local = S.local || P.local;
+        S.preMat = P.mat || [];
+        if (P.pessoas && P.pessoas.length) S.prePessoas = P.pessoas;
+    }
+    if (!S.uid) S.uid = Date.now().toString(36) + Math.random().toString(36).substring(2, 7);   // identifica esta ficha (versões guardadas em vários ficheiros)
+    if (!S.equipas.length) { S.equipas.push({ tipo: D.modo === "MNA" ? "MNA" : "ANT", pessoas: [{ fun: "p", p: "" }, { fun: "p", p: "" }], voos: [], anti: [] }); S.chefe = S.chefe || "nao"; }
+    if (S.preMat) {                                 // material do pedido (anti-drone e viaturas passam para a equipa)
+        S.mat = S.mat || {};
+        S.preMat.forEach(function(k) { if (!S.mat[k]) matToggle(k); });
+        delete S.preMat;
+    }
+    }
+};
+(function _fichaAppShell() {
+    var MIDX = "GOMTI_MISSOES";
+    function lsGet(k) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+    function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+    function lista() { return lsGet(MIDX) || []; }
+    function guardarMissao(D) {
+        lsSet("GOMTI_MISSAO|" + D.gerado, D);
+        var ix = lista().filter(function(x) { return x.gerado !== D.gerado; });
+        ix.push({ gerado: D.gerado, codigo: D.codigo, desc: D.desc, sol: D.pre ? D.pre.sol : "", local: D.pre ? D.pre.local : "", data: D.pre ? D.pre.data : "", rec: new Date().toISOString() });
+        lsSet(MIDX, ix);
+    }
+    function abrirMissao(g) {
+        var D = lsGet("GOMTI_MISSAO|" + g); if (!D) { home("Missão não encontrada neste telemóvel."); return; }
+        lsSet("GOMTI_ULTIMA", g);
+        window.DATA = D; window.GOMTI_APP = true;
+        document.getElementById("app").innerHTML = "";
+        GOMTI_FICHA_APP();
+    }
+    function b64urlParaBytes(s) {
+        s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+        var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u;
+    }
+    function descomprimir(t) {
+        var tipo = t.charAt(0), bytes = b64urlParaBytes(t.substring(1));
+        if (tipo === "j") return Promise.resolve(JSON.parse(new TextDecoder().decode(bytes)));
+        if (typeof DecompressionStream !== "function") return Promise.reject(new Error("Este telemóvel não abre links comprimidos — use o ficheiro da missão."));
+        var ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        return new Response(ds).text().then(function(x) { return JSON.parse(x); });
+    }
+    function receber(txt) {
+        var m = String(txt || "").match(/[#&]m=([A-Za-z0-9_\-]+)/);
+        if (!m) return Promise.reject(new Error("Link inválido."));
+        return descomprimir(m[1]).then(function(D) {
+            if (!D || !D.gerado || !D.codigo) throw new Error("Link sem missão.");
+            guardarMissao(D); return D;
+        });
+    }
+    function home(msg) {
+        var ix = lista().sort(function(a, b) { return String(b.rec).localeCompare(String(a.rec)); });
+        document.getElementById("app").innerHTML = '<header style="background:#1a3a5c;color:#fff;padding:12px 14px;font:bold 18px Arial">📲 GOMTI — Ficha de missão</header>'
+            + '<main style="max-width:700px;margin:0 auto;padding:10px;font:15px Arial,sans-serif">'
+            + (msg ? '<div style="background:#fff3e0;border:1px solid #ffcc80;padding:8px;border-radius:6px;margin-bottom:8px">' + esc(msg) + '</div>' : '')
+            + '<h3 style="color:#1a3a5c;margin:8px 0">Missões neste telemóvel</h3>'
+            + (ix.length ? ix.map(function(x) {
+                return '<div style="display:flex;gap:6px;margin:6px 0"><button data-m="' + esc(x.gerado) + '" style="flex:1;text-align:left;padding:12px;border:1px solid #1a6eb5;background:#fff;color:#1a3a5c;border-radius:6px;font-size:15px">'
+                    + '<b>' + esc(x.codigo) + (x.sol ? ' · pedido #' + esc(x.sol) : '') + '</b><br><small>' + esc([x.data, x.local].filter(Boolean).join(" · ") || x.desc || "") + '</small></button>'
+                    + '<button data-apagar="' + esc(x.gerado) + '" style="padding:0 12px;border:0;background:#c62828;color:#fff;border-radius:6px">🗑</button></div>';
+            }).join("") : '<div style="color:#666">Ainda não há missões. Toque no link da missão enviado no WhatsApp, ou abra o ficheiro da missão.</div>')
+            + '<h3 style="color:#1a3a5c;margin:16px 0 6px">Receber missão</h3>'
+            + '<button id="hFich" style="width:100%;padding:13px;border:0;background:#1a6eb5;color:#fff;border-radius:6px;font-size:16px">📂 Abrir ficheiro de missão</button>'
+            + '<input type="file" id="hFichInp" accept=".json,application/json" style="display:none"/>'
+            + '<div style="margin-top:10px"><input id="hLink" placeholder="🔗 Colar aqui o link da missão" style="width:100%;box-sizing:border-box;padding:10px;font-size:15px;border:1px solid #b9c6d6;border-radius:5px"/></div>'
+            + '<div style="color:#888;font-size:12px;margin-top:14px">Os dados ficam só neste telemóvel. No fim de cada missão, «📤 Partilhar» a ficha para o RM.</div></main>';
+        var app = document.getElementById("app");
+        app.oninput = app.onchange = null;          // largar os eventos da ficha anterior
+        app.onclick = function(ev) {
+            var b = ev.target.closest("button"); if (!b) return;
+            if (b.getAttribute("data-m")) { abrirMissao(b.getAttribute("data-m")); return; }
+            if (b.getAttribute("data-apagar")) {
+                if (!confirm("Apagar esta missão deste telemóvel? (as fichas já partilhadas não se perdem)")) return;
+                var g = b.getAttribute("data-apagar");
+                try { localStorage.removeItem("GOMTI_MISSAO|" + g); } catch (e) {}
+                lsSet(MIDX, lista().filter(function(x) { return x.gerado !== g; })); home(); return;
+            }
+            if (b.id === "hFich") document.getElementById("hFichInp").click();
+        };
+        document.getElementById("hFichInp").onchange = function() {
+            var f = this.files[0]; if (!f) return;
+            var rd = new FileReader();
+            rd.onload = function() {
+                var j = null; try { j = JSON.parse(rd.result); } catch (e) {}
+                if (j && j.tipo === "GOMTI_MISSAO" && j.gerado) { guardarMissao(j); abrirMissao(j.gerado); return; }
+                if (j && j.tipo === "GOMTI_FICHA_RM") { home("Esse ficheiro é uma ficha já preenchida: abra primeiro a missão e, dentro dela, «📂 Abrir»."); return; }
+                home("Ficheiro inválido — escolha o ficheiro da missão (Missao_….json).");
+            };
+            rd.readAsText(f);
+        };
+        document.getElementById("hLink").oninput = function() {
+            var v = this.value; if (!/m=/.test(v)) return;
+            receber(v).then(function(D) { abrirMissao(D.gerado); }, function(e) { home(e.message); });
+        };
+    }
+    window.GOMTI_HOME = function() { home(); };
+    if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js"); } catch (e) {} }
+    function doLink() {
+        if (!/[#&]m=/.test(location.hash)) return false;
+        var h = location.hash;
+        try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+        receber(h).then(function(D) { abrirMissao(D.gerado); }, function(e) { home(e.message); });
+        return true;
+    }
+    window.addEventListener("hashchange", doLink);      // link tocado com a app já aberta
+    if (doLink()) return;
+    var ix0 = lista();
+    if (ix0.length === 1) abrirMissao(ix0[0].gerado);
+    else home();
+})();
+</script></body></html>
