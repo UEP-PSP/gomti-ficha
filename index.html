@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-/* GOMTI Ficha — versão 202610271201 — sem dados: a missão vem do link/ficheiro gerado no RM */
+/* GOMTI Ficha — versão 202610271218 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -289,6 +289,12 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         return h + '</div>';
     }
     // ── Diário da missão (escrita livre com hora) — entra na fita do tempo do RM ──
+    // ordem real mesmo passando a meia-noite (referência: chegada ao local / saída)
+    function ordenarDiario() {
+        var ref = (S.hCheg || S.hSai || "").substring(11, 16), r = ref ? (+ref.substring(0, 2) * 60 + +ref.substring(3, 5)) : null;
+        var k = function(h) { var p = String(h || "").split(":"); if (p.length < 2) return 99999; var m = +p[0] * 60 + +p[1]; return (r !== null && m < r - 60) ? m + 1440 : m; };
+        S.diario.sort(function(x, y) { return k(x.h) - k(y.h); });
+    }
     function diarioHtml() {
         S.diario = S.diario || [];
         return '<div class="pv"><div class="nota">Aponte o que for relevante (pedidos, contactos, deteções, autuações, problemas). Fica com a hora, que pode corrigir.</div>'
@@ -418,7 +424,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             if (at("data-chkh")) { if (ev.type !== "change") return; lerCampos(); S.chk[at("data-chkh")] = ev.target.value || hora(); render(); guardar(); return; }
             if (at("data-test")) { if (ev.type !== "change") return; lerCampos(); S.mat[at("data-test")].test = ev.target.checked ? hora() : ""; render(); guardar(); return; }
             if (at("data-testh")) { if (ev.type !== "change") return; lerCampos(); S.mat[at("data-testh")].test = ev.target.value || hora(); render(); guardar(); return; }
-            if (at("data-dih")) { if (ev.type !== "change") return; S.diario[+at("data-dih")].h = ev.target.value; S.diario.sort(function(x, y) { return String(x.h).localeCompare(String(y.h)); }); lerCampos(); render(); guardar(); return; }
+            if (at("data-dih")) { if (ev.type !== "change") return; S.diario[+at("data-dih")].h = ev.target.value; ordenarDiario(); lerCampos(); render(); guardar(); return; }
             if (at("data-dit")) { S.diario[+at("data-dit")].t = ev.target.value; guardar(); return; }
             if (ev.target.id === "diTxt") return;
             if (ev.target.id === "matOutro") return;
@@ -503,7 +509,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             if (b.id === "bDiario") {
                 var tx = ($("diTxt").value || "").trim(); if (!tx) { $("diTxt").focus(); return; }
                 S.diario = S.diario || []; S.diario.push({ h: hora(), t: tx });
-                S.diario.sort(function(x, y) { return String(x.h).localeCompare(String(y.h)); });
+                ordenarDiario();
                 render(); guardar(); return;
             }
             if (g("data-direm") !== null) { if (confirm("Apagar este registo?")) { S.diario.splice(+g("data-direm"), 1); render(); guardar(); } return; }
