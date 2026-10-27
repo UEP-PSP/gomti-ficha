@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-/* GOMTI Ficha — versão 202610271218 — sem dados: a missão vem do link/ficheiro gerado no RM */
+/* GOMTI Ficha — versão 202610271301 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -43,7 +43,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         var so = function(mostra) { return mostra ? '<section>' : '<section style="display:none">'; };
         $("app").innerHTML = dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + ' (' + esc(D.modo) + ')</h1>'
             + '<div class="row hb">' + (window.GOMTI_APP ? '<button class="sec" id="bHome" title="Outras missões">🏠</button>' : '') + '<button class="sec" id="bPapel" title="Trocar o papel">' + PAPEIS[S.papel] + ' ✎</button><button class="sec" id="bAlto" title="Letra maior e contraste alto (ao sol)">🔆</button><button class="sec" id="bAbrir">📂 Abrir</button><button id="bExp">💾 Guardar</button><button id="bPart">📤 Partilhar</button></div></header><main>'
-            + (D.pre ? '<div class="ok" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1;margin-bottom:8px">📋 <strong>Pedido #' + esc(D.pre.sol) + '</strong> · ' + esc(D.pre.data) + (D.pre.hora ? " · " + esc(D.pre.hora) + (D.pre.horaFim ? "–" + esc(D.pre.horaFim) : "") : "") + ' · ' + esc(D.pre.local)
+            + (D.pre ? '<div class="ok" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1;margin-bottom:8px">📋 <strong>' + (D.pre.sol ? 'Pedido #' + esc(D.pre.sol) : 'Sem pedido') + '</strong> · ' + esc(D.pre.data) + (D.pre.hora ? " · " + esc(D.pre.hora) + (D.pre.horaFim ? "–" + esc(D.pre.horaFim) : "") : "") + ' · ' + esc(D.pre.local)
                 + (D.pre.pessoas && D.pre.pessoas.length ? '<br>👥 Nomeados: ' + esc(D.pre.pessoas.map(function(x) { return x.replace(/^\d+\s*—\s*/, ""); }).join(", ")) : '') + (D.pre.notas ? '<br>📝 ' + esc(D.pre.notas) : '') + '</div>' : '')
             + '<div class="nf"><label>📁 Nome do ficheiro</label><input data-k="nomeFich" placeholder="' + esc(nomeSugerido()) + '" value="' + esc(v.nomeFich) + '"/></div>'
             + '<div id="estado" class="ok">Guardado automaticamente neste telemóvel.</div>'
@@ -606,7 +606,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     document.body.classList.toggle("alto", !!S.alto);
     if (D.pre && !S.preAplicado) {                 // pedido escolhido ao gerar a ficha (só na 1.ª abertura)
         var P = D.pre; S.preAplicado = true;
-        S.sol = S.sol || String(P.sol); S.ent = S.ent || P.ent; S.local = S.local || P.local;
+        S.sol = S.sol || (P.sol ? String(P.sol) : ""); S.ent = S.ent || P.ent; S.local = S.local || P.local;
         S.preMat = P.mat || [];
         if (P.pessoas && P.pessoas.length) S.prePessoas = P.pessoas;
     }
@@ -626,9 +626,12 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
     function lista() { return lsGet(MIDX) || []; }
     function guardarMissao(D) {
+        // catálogo (listas da unidade) da missão mais recente recebida do RM — serve para criar missões sem pedido
+        if (!D.manual) lsSet("GOMTI_CATALOGO", { recebido: new Date().toISOString(), entidades: D.entidades || [], drones: D.drones || [], baterias: D.baterias || [], anti: D.anti || [], viaturas: D.viaturas || [], embarcacoes: D.embarcacoes || [], pessoas: D.pessoas || [],
+            codigos: (D.catalogo || {}).codigos || [{ cod: D.codigo, desc: D.desc || "", modo: D.modo || "Ambos" }], tipos: (D.catalogo || {}).tipos || [], checklist: (D.catalogo || {}).checklist || D.checklist || [] });
         lsSet("GOMTI_MISSAO|" + D.gerado, D);
         var ix = lista().filter(function(x) { return x.gerado !== D.gerado; });
-        ix.push({ gerado: D.gerado, codigo: D.codigo, desc: D.desc, sol: D.pre ? D.pre.sol : "", local: D.pre ? D.pre.local : "", data: D.pre ? D.pre.data : "", rec: new Date().toISOString() });
+        ix.push({ gerado: D.gerado, codigo: D.codigo, desc: D.desc, sol: D.pre ? D.pre.sol : "", local: D.pre ? D.pre.local : "", data: D.pre ? D.pre.data : "", manual: !!D.manual, rec: new Date().toISOString() });
         lsSet(MIDX, ix);
     }
     function abrirMissao(g) {
@@ -671,9 +674,11 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + '<h3 style="color:#1a3a5c;margin:8px 0">Missões neste telemóvel</h3>'
             + (ix.length ? ix.map(function(x) {
                 return '<div style="display:flex;gap:6px;margin:6px 0"><button data-m="' + esc(x.gerado) + '" style="flex:1;text-align:left;padding:12px;border:1px solid #1a6eb5;background:#fff;color:#1a3a5c;border-radius:6px;font-size:15px">'
-                    + '<b>' + esc(x.codigo) + (x.sol ? ' · pedido #' + esc(x.sol) : '') + '</b><br><small>' + esc([x.data, x.local].filter(Boolean).join(" · ") || x.desc || "") + '</small></button>'
+                    + '<b>' + esc(x.codigo) + (x.sol ? ' · pedido #' + esc(x.sol) : (x.manual ? ' · sem pedido' : '')) + '</b><br><small>' + esc([x.data, x.local].filter(Boolean).join(" · ") || x.desc || "") + '</small></button>'
                     + '<button data-apagar="' + esc(x.gerado) + '" style="padding:0 12px;border:0;background:#c62828;color:#fff;border-radius:6px">🗑</button></div>';
             }).join("") : '<div style="color:#666">Ainda não há missões. Toque no link da missão enviado no WhatsApp, ou abra o ficheiro da missão.</div>')
+            + '<button id="hNova" style="width:100%;padding:13px;border:1px solid #2e7d32;background:#fff;color:#2e7d32;border-radius:6px;font-size:16px;margin-top:8px">＋ Nova missão sem pedido</button>'
+            + '<div id="hNovaForm"></div>'
             + '<h3 style="color:#1a3a5c;margin:16px 0 6px">Receber missão</h3>'
             + '<button id="hFich" style="width:100%;padding:13px;border:0;background:#1a6eb5;color:#fff;border-radius:6px;font-size:16px">📂 Abrir ficheiro de missão</button>'
             + '<input type="file" id="hFichInp" accept=".json,application/json" style="display:none"/>'
@@ -691,6 +696,8 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                 lsSet(MIDX, lista().filter(function(x) { return x.gerado !== g; })); home(); return;
             }
             if (b.id === "hFich") document.getElementById("hFichInp").click();
+            if (b.id === "hNova") { formNova(); return; }
+            if (b.id === "hCriar") { criarNova(); return; }
             if (b.id === "hInstalar" && window._gomtiInstalar) { var pr = window._gomtiInstalar; window._gomtiInstalar = null; pr.prompt(); pr.userChoice.then(function() { home(); }); }
         };
         document.getElementById("hFichInp").onchange = function() {
@@ -708,6 +715,37 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             var v = this.value; if (!/m=/.test(v)) return;
             receber(v).then(function(D) { abrirMissao(D.gerado); }, function(e) { home(e.message); });
         };
+    }
+    // ── Missão criada no telemóvel (sem pedido do RM) ──
+    function formNova() {
+        var cat = lsGet("GOMTI_CATALOGO"), box = document.getElementById("hNovaForm");
+        var cods = cat && cat.codigos && cat.codigos.length ? cat.codigos : [];
+        var hoje = new Date(), p2 = function(n) { return (n < 10 ? "0" : "") + n; };
+        var st = 'style="width:100%;box-sizing:border-box;padding:10px;font-size:15px;border:1px solid #b9c6d6;border-radius:5px;margin-bottom:8px"';
+        box.innerHTML = '<div style="border:1px solid #a5d6a7;background:#f1f8e9;border-radius:6px;padding:10px;margin-top:8px">'
+            + (cat ? '' : '<div style="color:#b26a00;font-size:13px;margin-bottom:8px">⚠️ Ainda não recebeu nenhuma missão do RM neste telemóvel: as listas de drones, baterias, anti-drones e pessoas vêm da primeira missão recebida. Pode criar na mesma e escrever o material à mão («Outro material»).</div>')
+            + '<label style="font-size:13px">Modo</label><select id="nModo" ' + st + '><option value="ANT">ANT — Meios Aéreos</option><option value="MNA">MNA — Meios Náuticos</option></select>'
+            + '<label style="font-size:13px">Código de serviço</label>'
+            + (cods.length ? '<select id="nCod" ' + st + '>' + cods.map(function(c) { return '<option value="' + esc(c.cod) + '" data-modo="' + esc(c.modo) + '">' + esc(c.cod + (c.desc ? " — " + c.desc : "")) + '</option>'; }).join("") + '</select>'
+                : '<input id="nCod" placeholder="ex.: VIG, APO" ' + st + '/>')
+            + '<label style="font-size:13px">Local</label><input id="nLocal" placeholder="ex.: Estádio, Rossio…" ' + st + '/>'
+            + '<label style="font-size:13px">Data</label><input id="nData" type="date" value="' + hoje.getFullYear() + "-" + p2(hoje.getMonth() + 1) + "-" + p2(hoje.getDate()) + '" ' + st + '/>'
+            + '<button id="hCriar" style="width:100%;padding:13px;border:0;background:#2e7d32;color:#fff;border-radius:6px;font-size:16px">Criar e abrir</button></div>';
+    }
+    function criarNova() {
+        var cat = lsGet("GOMTI_CATALOGO") || {};
+        var cod = String((document.getElementById("nCod") || {}).value || "").trim().toUpperCase();
+        if (!cod) { alert("Indique o código de serviço."); return; }
+        var modo = (document.getElementById("nModo") || {}).value || "ANT";
+        var info = (cat.codigos || []).filter(function(c) { return c.cod === cod; })[0] || { desc: "" };
+        var tipos = (cat.tipos || []).filter(function(t) { return t.cod === cod; });
+        var local = String((document.getElementById("nLocal") || {}).value || "").trim(), data = (document.getElementById("nData") || {}).value || "";
+        var D = { v: 1, manual: true, gerado: new Date().toISOString(), codigo: cod, desc: info.desc || "", modo: modo,
+            tipos: tipos.map(function(t) { return t.nome; }), tiposSemMin: tipos.filter(function(t) { return t.semMin; }).map(function(t) { return t.nome; }),
+            entidades: cat.entidades || [], drones: cat.drones || [], baterias: cat.baterias || [], anti: cat.anti || [], viaturas: cat.viaturas || [], embarcacoes: cat.embarcacoes || [], pessoas: cat.pessoas || [],
+            checklist: (cat.checklist || []).filter(function(t) { return !t.cods || String(t.cods).toUpperCase().split(/[\s,;]+/).indexOf(cod) > -1; }),
+            pre: { sol: "", titulo: "", ent: "", local: local, data: data ? data.split("-").reverse().join("/") : "", hora: "", horaFim: "", pessoas: [], mat: [], notas: "Missão criada no telemóvel (sem pedido)" } };
+        guardarMissao(D); abrirMissao(D.gerado);
     }
     window.GOMTI_HOME = function() { home(); };
     // Chrome/Android: botão «Instalar a app» (quando o browser o permite)
