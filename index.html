@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-/* GOMTI Ficha — versão 202610251446 — sem dados: a missão vem do link/ficheiro gerado no RM */
+/* GOMTI Ficha — versão 202610271201 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -72,7 +72,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + '<div class="g2" style="display:none"><div><label>Detetor anti-drone — local / coordenadas</label><input data-k="detCoord" value="' + esc(v.detCoord) + '"/></div><div><label>Raio de deteção (m)</label><input type="number" data-k="detRaio" value="' + esc(v.detRaio) + '"/></div></div>' + (pct ? '' : '<div class="nota" style="margin-top:6px">📍 Os locais de descolagem e de cada anti-drone estão nos cartões da secção 4.</div>') + '</section>'
             + so(!eqp) + '<h2>7. Resultado</h2>'
             + [["Det", "🛸 Deteção de drone(s)?", 1], ["Ini", "📡 Inibição de drone(s)?", 1], ["Out", "⚠️ Outras ocorrências?", 0]].map(function(q) {
-                return '<label>' + q[1] + ' ' + radio("oc" + q[0], v["oc" + q[0]]) + '</label>' + (q[2] ? '<input type="number" data-k="oc' + q[0] + 'Q" placeholder="Quantos?" value="' + esc(v["oc" + q[0] + "Q"]) + '" style="max-width:140px"/>' : '')
+                return '<label>' + q[1] + ' ' + radio("oc" + q[0], v["oc" + q[0]]) + '</label>' + (q[2] ? '<input type="number" data-k="oc' + q[0] + 'Q" placeholder="' + (q[0] === "Ini" ? "Quantos inibidos? (0 = sem efeito)" : "Quantos?") + '" value="' + esc(v["oc" + q[0] + "Q"]) + '" style="max-width:140px"/>' : '')
                     + '<textarea data-k="oc' + q[0] + 'T" placeholder="Descrição (se Sim)">' + esc(v["oc" + q[0] + "T"]) + '</textarea>'; }).join("")
             + '<div class="g2"><div><label>NPP / NUIPC</label><input data-k="npp" value="' + esc(v.npp) + '"/></div><div><label>Detenções / feridos civis / feridos PSP</label><div class="row"><input type="number" data-k="det" placeholder="Det." value="' + esc(v.det) + '"/><input type="number" data-k="ferC" placeholder="Civis" value="' + esc(v.ferC) + '"/><input type="number" data-k="ferP" placeholder="PSP" value="' + esc(v.ferP) + '"/></div></div></div>'
             + '<label>Operação conjunta? ' + radio("opConj", v.opConj) + '</label><label>Policiamento desportivo? ' + radio("polDesp", v.polDesp) + '</label></section>'
@@ -656,6 +656,12 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         document.getElementById("app").innerHTML = '<header style="background:#1a3a5c;color:#fff;padding:12px 14px;font:bold 18px Arial">📲 GOMTI — Ficha de missão</header>'
             + '<main style="max-width:700px;margin:0 auto;padding:10px;font:15px Arial,sans-serif">'
             + (msg ? '<div style="background:#fff3e0;border:1px solid #ffcc80;padding:8px;border-radius:6px;margin-bottom:8px">' + esc(msg) + '</div>' : '')
+            + (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches ? '' :
+                '<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;padding:10px;margin-bottom:10px">'
+                + (window._gomtiInstalar ? '<button id="hInstalar" style="width:100%;padding:13px;border:0;background:#2e7d32;color:#fff;border-radius:6px;font-size:16px">⬇️ Instalar a app neste telemóvel</button>'
+                    : (/iphone|ipad/i.test(navigator.userAgent) ? '📲 Para instalar: no Safari, botão <b>Partilhar</b> → <b>«Adicionar ao ecrã principal»</b>.'
+                        : '📲 Para instalar: menu <b>⋮</b> do Chrome → <b>«Instalar app»</b> ou <b>«Adicionar ao ecrã principal»</b> → «Instalar».'))
+                + '</div>')
             + '<h3 style="color:#1a3a5c;margin:8px 0">Missões neste telemóvel</h3>'
             + (ix.length ? ix.map(function(x) {
                 return '<div style="display:flex;gap:6px;margin:6px 0"><button data-m="' + esc(x.gerado) + '" style="flex:1;text-align:left;padding:12px;border:1px solid #1a6eb5;background:#fff;color:#1a3a5c;border-radius:6px;font-size:15px">'
@@ -679,6 +685,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                 lsSet(MIDX, lista().filter(function(x) { return x.gerado !== g; })); home(); return;
             }
             if (b.id === "hFich") document.getElementById("hFichInp").click();
+            if (b.id === "hInstalar" && window._gomtiInstalar) { var pr = window._gomtiInstalar; window._gomtiInstalar = null; pr.prompt(); pr.userChoice.then(function() { home(); }); }
         };
         document.getElementById("hFichInp").onchange = function() {
             var f = this.files[0]; if (!f) return;
@@ -697,6 +704,12 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         };
     }
     window.GOMTI_HOME = function() { home(); };
+    // Chrome/Android: botão «Instalar a app» (quando o browser o permite)
+    window.addEventListener("beforeinstallprompt", function(e) {
+        e.preventDefault(); window._gomtiInstalar = e;
+        if (document.getElementById("hFich") && !document.getElementById("hInstalar")) home();
+    });
+    window.addEventListener("appinstalled", function() { window._gomtiInstalar = null; });
     if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js"); } catch (e) {} }
     function doLink() {
         if (!/[#&]m=/.test(location.hash)) return false;
