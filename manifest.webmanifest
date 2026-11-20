@@ -1,6 +1,6 @@
 {
- "name": "GOMTI — Ficha de missão",
- "short_name": "GOMTI Ficha",
+ "name": "GOMTI - Ficha de RM V1.0",
+ "short_name": "GOMTI Ficha RM",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

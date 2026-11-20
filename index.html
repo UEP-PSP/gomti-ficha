@@ -1,5 +1,6 @@
-<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI Ficha</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-/* GOMTI Ficha — versão 202611202021 — sem dados: a missão vem do link/ficheiro gerado no RM */
+<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI - Ficha de RM V1.0</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
+var GOMTI_FICHA_VERSAO = "1.0";
+/* GOMTI Ficha — versão 202611202036 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -41,7 +42,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         if (!S.papel || mostrarEscolha) { $("app").innerHTML = htmlPapel(); ligar(); return; }
         var pct = S.papel === "pct", eqp = S.papel === "eq";
         var so = function(mostra) { return mostra ? '<section>' : '<section style="display:none">'; };
-        $("app").innerHTML = dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + ' (' + esc(D.modo) + ')</h1>'
+        $("app").innerHTML = dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + ' (' + esc(D.modo) + ')' + (window.GOMTI_FICHA_VERSAO ? ' <span style="font-weight:normal;font-size:12px;opacity:.8">V' + window.GOMTI_FICHA_VERSAO + '</span>' : '') + '</h1>'
             + '<div class="row hb">' + (window.GOMTI_APP ? '<button class="sec" id="bHome" title="Outras missões">🏠</button>' : '') + '<button class="sec" id="bPapel" title="Trocar o papel">' + PAPEIS[S.papel] + ' ✎</button><button class="sec" id="bAlto" title="Letra maior e contraste alto (ao sol)">🔆</button><button class="sec" id="bAbrir">📂 Abrir</button><button id="bExp">💾 Guardar</button><button id="bPart">📤 Partilhar</button></div></header><main>'
             + (D.pre ? '<div class="ok" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1;margin-bottom:8px">📋 <strong>' + (D.pre.sol ? 'Pedido #' + esc(D.pre.sol) : 'Sem pedido') + '</strong> · ' + esc(D.pre.data) + (D.pre.hora ? " · " + esc(D.pre.hora) + (D.pre.horaFim ? "–" + esc(D.pre.horaFim) : "") : "") + ' · ' + esc(D.pre.local)
                 + (D.pre.pessoas && D.pre.pessoas.length ? '<br>👥 Nomeados: ' + esc(D.pre.pessoas.map(function(x) { return x.replace(/^\d+\s*—\s*/, ""); }).join(", ")) : '') + (D.pre.notas ? '<br>📝 ' + esc(D.pre.notas) : '') + '</div>' : '')
@@ -134,7 +135,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                     + '<br><small>alterada ' + esc(String(x.upd || "").replace("T", " ").substring(5, 16)) + (x.uid === S.uid && S.papel ? ' · aberta' : '') + '</small></button>'
                     + '<button class="rem" data-apagarficha="' + esc(x.uid) + '" title="Apagar esta ficha deste aparelho">🗑</button></div>';
             }).join("") + '</section>' : '';
-        return dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + '</h1></header><main>' + lista + '<section><h2>' + (ix.length ? 'Nova ficha — quem a vai usar?' : 'Quem vai usar esta ficha?') + '</h2>'
+        return dl + '<header><h1>📲 Ficha digital — ' + esc(D.codigo) + (D.desc ? " · " + esc(D.desc) : "") + (window.GOMTI_FICHA_VERSAO ? ' <span style="font-weight:normal;font-size:12px;opacity:.8">V' + window.GOMTI_FICHA_VERSAO + '</span>' : '') + '</h1></header><main>' + lista + '<section><h2>' + (ix.length ? 'Nova ficha — quem a vai usar?' : 'Quem vai usar esta ficha?') + '</h2>'
             + '<div class="nota" style="margin-bottom:8px">A Equipa e o Comandante do PCT preenchem cada um a sua ficha; no RM importam-se as duas juntas e o RM cruza os dados (voos, horas). Se a equipa operar sem Chefe no PCT, escolha «Equipa sozinha».</div>'
             + '<button class="bigb" data-papel="eq">👥 Equipa (pilotos)<br><small>material, voos (drone e bateria), locais</small></button>'
             + '<button class="bigb" data-papel="pct">🎯 Comandante do PCT<br><small>contactos, tarefas, horas e missão de cada voo, ocorrências</small></button>'
@@ -684,7 +685,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
         var tarefas = {};
         (D.checklist || []).forEach(function(t) { if (S.chk && S.chk[t.id]) tarefas[t.id] = { fase: t.fase, t: textoTarefa(t.t), hora: S.chk[t.id] }; });
         var material = Object.keys(S.mat || {}).map(function(k) { return { k: k, t: matNome(k), test: S.mat[k].test || "" }; });
-        var out = { tipo: "GOMTI_FICHA_RM", v: 1, uid: S.uid, papel: S.papel || "solo", codigo: D.codigo, modo: D.modo, gerado: D.gerado, exportado: new Date().toISOString(), drones: D.drones, baterias: D.baterias, anti: D.anti, viaturas: D.viaturas, embarcacoes: D.embarcacoes, tarefas: tarefas, material: material, ficha: S };
+        var out = { tipo: "GOMTI_FICHA_RM", v: 1, app: window.GOMTI_FICHA_VERSAO || "", uid: S.uid, papel: S.papel || "solo", codigo: D.codigo, modo: D.modo, gerado: D.gerado, exportado: new Date().toISOString(), drones: D.drones, baterias: D.baterias, anti: D.anti, viaturas: D.viaturas, embarcacoes: D.embarcacoes, tarefas: tarefas, material: material, ficha: S };
         if (!nomeLimpo(S.nomeFich)) { S.nomeFich = nomeSugerido(); var ni = document.querySelector('[data-k="nomeFich"]'); if (ni) ni.value = S.nomeFich; guardar(); }
         var nome = nomeLimpo(S.nomeFich) + ".json";
         var txt = JSON.stringify(out, null, 1);
@@ -786,7 +787,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     }
     function home(msg) {
         var ix = lista().sort(function(a, b) { return String(b.rec).localeCompare(String(a.rec)); });
-        document.getElementById("app").innerHTML = '<header style="background:#1a3a5c;color:#fff;padding:12px 14px;font:bold 18px Arial">📲 GOMTI — Ficha de missão</header>'
+        document.getElementById("app").innerHTML = '<header style="background:#1a3a5c;color:#fff;padding:12px 14px;font:bold 18px Arial">📲 GOMTI - Ficha de RM' + (window.GOMTI_FICHA_VERSAO ? ' <span style="font-weight:normal;font-size:14px;opacity:.85">V' + window.GOMTI_FICHA_VERSAO + '</span>' : '') + '</header>'
             + '<main style="max-width:700px;margin:0 auto;padding:10px;font:15px Arial,sans-serif">'
             + (msg ? '<div style="background:#fff3e0;border:1px solid #ffcc80;padding:8px;border-radius:6px;margin-bottom:8px">' + esc(msg) + '</div>' : '')
             + (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches ? '' :
