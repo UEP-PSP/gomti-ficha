@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI - Ficha de RM V1.2</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-var GOMTI_FICHA_VERSAO = "1.2";
-/* GOMTI Ficha — versão 202611212050 — sem dados: a missão vem do link/ficheiro gerado no RM */
+<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI - Ficha de RM V1.4</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
+var GOMTI_FICHA_VERSAO = "1.4";
+/* GOMTI Ficha — versão 202611220216 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -414,12 +414,17 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                     + (noAr ? '<span class="agora" style="background:#e65100">NO AR</span>' : (i === atual ? '<span class="agora">AGORA</span>' : '')) + '</summary>'
                     + (/^1\./.test(f.nome) && S.papel !== "pct" ? '<div class="nota" style="margin:4px 0 6px">👉 Comece por <a href="#secEq" data-ir="secEq">«1. Equipa e meios»</a> (pilotos, drones e anti-drone) — fica tudo pronto antes de chegar.</div>' + matHtml() : '')
                     + (/^1\./.test(f.nome) && S.papel === "pct" ? pctMatHtml() : '')
-                    + (/^3\./.test(f.nome) && S.papel !== "eq" ? drAutHtml() + signalHtml("ini") : '')
-                    + (/^6\./.test(f.nome) && S.papel !== "eq" ? signalHtml("fim") : '')
-                    + f.tarefas.map(function(t) {
-                        var feito = S.chk[t.id];
-                        return '<label class="tar' + (feito ? " feita" : "") + '"><input type="checkbox" data-chk="' + esc(t.id) + '"' + (feito ? " checked" : "") + '/><span>' + esc(textoTarefa(t.t)) + '</span>' + (feito ? hChip("data-chkh", t.id, feito) : '') + '</label>';
-                    }).join("")
+                    + (function() {                                                       // caixas extra junto da tarefa respectiva (ordem da checklist)
+                        var pct = S.papel !== "eq", f3 = /^3\./.test(f.nome), f6 = /^6\./.test(f.nome);
+                        var sig = pct && (f3 || f6) ? signalHtml(f3 ? "ini" : "fim") : "", dra = pct && f3 ? drAutHtml() : "";
+                        var h = f.tarefas.map(function(t) {
+                            var feito = S.chk[t.id], antes = "";
+                            if (sig && /signal/i.test(t.t)) { antes += sig; sig = ""; }
+                            if (dra && /drones autorizados/i.test(t.t)) { antes += dra; dra = ""; }
+                            return antes + '<label class="tar' + (feito ? " feita" : "") + '"><input type="checkbox" data-chk="' + esc(t.id) + '"' + (feito ? " checked" : "") + '/><span>' + esc(textoTarefa(t.t)) + '</span>' + (feito ? hChip("data-chkh", t.id, feito) : '') + '</label>';
+                        }).join("");
+                        return h + dra + sig;                                            // sem tarefa correspondente: no fim
+                    })()
                     + (f.voos ? voosHtml() : '') + (f.diario ? diarioHtml() : '')
                     + (f.hora ? (hv ? '<div class="fh">🕒 ' + esc(f.hora[1].replace(/ — registar hora$/, "")) + ' às ' + hChip("data-fh", f.hora[0], hv) + '</div>'
                                     : '<button class="btnFase" data-agora="' + f.hora[0] + '">' + f.hora[1] + '</button>') : '')
@@ -698,10 +703,21 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                 renderNoSitio(b); guardar(); return;
             }
             if (g("data-copiar")) {
-                lerCampos(); var tc = S[g("data-copiar")] || "";
+                var kc = g("data-copiar"), ta = document.querySelector('[data-k="' + kc + '"]');
+                var tc = ta && ta.value ? ta.value : (S[kc] || signalAuto(kc === "sigIni" ? "ini" : "fim"));   // texto visível (o automático fica "" no estado)
+                lerCampos();
                 var feito = function() { b.textContent = "✔ Copiado"; setTimeout(function() { b.textContent = "📋 Copiar"; }, 1800); };
-                if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tc).then(feito, function() { prompt("Copie o texto:", tc); });
-                else { var ta = document.querySelector('[data-k="' + g("data-copiar") + '"]'); if (ta) { ta.select(); try { document.execCommand("copy"); feito(); } catch (eC) { prompt("Copie o texto:", tc); } } }
+                var falhou = function() { if (ta) { ta.focus(); ta.select(); } b.textContent = "✋ Copie à mão (texto seleccionado)"; setTimeout(function() { b.textContent = "📋 Copiar"; }, 4000); };
+                var ok = false;
+                try {                                                                    // cópia síncrona (no próprio toque) — funciona em Android/iOS
+                    var tmp = document.createElement("textarea"); tmp.value = tc; tmp.setAttribute("readonly", "");
+                    tmp.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-size:16px";
+                    document.body.appendChild(tmp); tmp.focus(); tmp.select(); tmp.setSelectionRange(0, tc.length);
+                    ok = document.execCommand("copy"); document.body.removeChild(tmp);
+                } catch (eC) { ok = false; }
+                if (ok) feito();
+                else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tc).then(feito, falhou);
+                else falhou();
                 guardar(); return;
             }
             if (g("data-sigreset")) { lerCampos(); S[g("data-sigreset")] = ""; renderNoSitio(b); guardar(); return; }
