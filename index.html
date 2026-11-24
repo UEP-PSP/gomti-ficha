@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI - Ficha de RM V1.9</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
-var GOMTI_FICHA_VERSAO = "1.9";
-/* GOMTI Ficha — versão 202611240858 — sem dados: a missão vem do link/ficheiro gerado no RM */
+<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#1a3a5c"/><link rel="manifest" href="manifest.webmanifest"/><link rel="icon" href="icon-192.png"/><link rel="apple-touch-icon" href="icon-192.png"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="GOMTI Ficha"/><title>GOMTI - Ficha de RM V2.1</title><style>body{margin:0;background:#f3f6fa;color:#1d2733}</style></head><body><div id="app"></div><script>
+var GOMTI_FICHA_VERSAO = "2.1";
+/* GOMTI Ficha — versão 202611240936 — sem dados: a missão vem do link/ficheiro gerado no RM */
 var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     var D = DATA, CHAVE = "GOMTI_FICHA|" + D.codigo + "|" + D.gerado;
     var S = { equipas: [], viaturas: [], observadores: [] };
@@ -117,7 +117,6 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             var voos = faseVoos(f), diario = /^5\./.test(f);
             if (/^1\./.test(f) && S.papel !== "pct" && (!Object.keys(S.mat || {}).length || !S.equipas.some(function(e) { return (e.pessoas || []).some(function(p) { return p.p; }); }))) feita = false;   // falta material / equipa
             if (/^1\./.test(f) && S.papel === "pct" && (!S.pmRadio || !S.pmPC || (S.pmPC === "rnsi" && !S.pmCabo) || !/\d{5,7}/.test(String(S.chefeP || "")))) feita = false;      // material / responsável do PCT por preencher
-            if (/^2\./.test(f) && S.papel === "pct" && (!S.brf || (S.brf === "sim" && (!String(S.brfLocal || "").trim() || !S.brfH)))) feita = false;   // briefing
             if (/^3\./.test(f) && S.papel === "pct" && !String(S.chefeLocal || "").trim()) feita = false;                          // local do PCT
             if (/^7\./.test(f) && (S.viaturas || []).some(function(v) { return v.vid && !String(v.km || "").trim(); })) feita = false;   // km das viaturas
             if (/^3\./.test(f) && S.papel !== "eq" && !S.drAut) feita = false;                                                         // «Há drones autorizados?»
@@ -394,34 +393,28 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             + '<div class="row"><button class="sec" data-copiar="' + k + '">📋 Copiar</button><button class="sec" data-sigreset="' + k + '" title="Voltar ao texto automático (entidade, serviço e local actuais)">↺ Texto automático</button></div></div>';
     }
     // ── Deteções de drones (hora · autorizado? · o que foi feito) ──
+    // ── Drones detetados/avistados (uma linha por drone; a inibição faz parte da mesma linha) ──
     function detsHtml() {
         S.dets = S.dets || [];
-        return '<div class="pv" style="margin-top:8px"><b>🛸 Deteções de drones</b><div class="nota">Cada deteção: hora, ID do drone, se estava autorizado e o que foi feito — tudo opcional.</div>'
-            + S.dets.map(function(d, i) {
-                return '<div class="voo vc" data-dt="' + i + '"' + (d.aut === "nao" ? ' style="border-left:4px solid #c62828"' : '') + '><div class="vh"><strong style="flex:1">Deteção ' + (i + 1) + '</strong><button class="rem" data-rem-dt="' + i + '">✕</button></div>'
-                    + '<div class="row hv"><label>🕒 Hora</label><input type="time" data-f="h" value="' + esc(d.h) + '"/></div>'
-                    + '<label>Estava autorizado?</label><select data-f="aut"><option value=""></option><option value="sim"' + (d.aut === "sim" ? " selected" : "") + '>Sim — autorizado</option><option value="nao"' + (d.aut === "nao" ? " selected" : "") + '>Não — sem autorização</option></select>'
-                    + '<label>🆔 ID do drone <span class="nota">(o que o Aerodetec mostra — opcional)</span></label><input data-f="id" value="' + esc(d.id) + '"/>'
-                    + '<label>O que foi feito <span class="nota">(opcional)</span></label><input data-f="ac" placeholder="ex.: piloto localizado e identificado; inibição tentada…" value="' + esc(d.ac) + '"/>'
-                    + '</div>'; }).join("")
-            + '<button class="bigb" data-add-dt="1">🛸 Deteção agora</button></div>';
-    }
-    // ── Inibições (tentativas) — hora, como foi detetado, ID, inibidor, resultado ──
-    var INI_OR = [["", ""], ["det_sem_aut", "Aerodetec — sem autorização"], ["det_area", "Aerodetec — autorizado, mas em área não permitida"], ["visual", "Visualmente (não detetado no Aerodetec)"], ["outro", "Outro"]];
-    function inisHtml() {
-        S.inis = S.inis || [];
         var jams = (D.anti || []).filter(function(a) { return /jammer|inibi/i.test(a.cat || ""); });
-        return '<div class="pv" style="margin-top:8px"><b>📡 Inibições de drones</b><div class="nota">Cada tentativa: hora, como foi detetado, ID, inibidor e resultado — tudo opcional.</div>'
-            + S.inis.map(function(d, i) {
-                return '<div class="voo vc" data-in="' + i + '"' + (d.res === "nao" ? ' style="border-left:4px solid #c62828"' : (d.res === "sim" ? ' style="border-left:4px solid #2e7d32"' : '')) + '><div class="vh"><strong style="flex:1">Inibição ' + (i + 1) + '</strong><button class="rem" data-rem-in="' + i + '">✕</button></div>'
+        var op = function(lst, v) { return lst.map(function(o) { return '<option value="' + o[0] + '"' + ((v || "") === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join(""); };
+        return '<div class="pv" style="margin-top:8px"><b>🛸 Drones detetados ou avistados</b><div class="nota">Uma linha por drone. Se tentou inibir, escolha «Inibição» na mesma linha — tudo opcional.</div>'
+            + S.dets.map(function(d, i) {
+                var ini = d.acT === "inibicao";
+                return '<div class="voo vc" data-dt="' + i + '"' + (d.res === "sim" ? ' style="border-left:4px solid #2e7d32"' : (d.res === "nao" || d.aut === "nao" ? ' style="border-left:4px solid #c62828"' : '')) + '><div class="vh"><strong style="flex:1">Drone ' + (i + 1) + '</strong><button class="rem" data-rem-dt="' + i + '">✕</button></div>'
                     + '<div class="row hv"><label>🕒 Hora</label><input type="time" data-f="h" value="' + esc(d.h) + '"/></div>'
-                    + '<label>Como foi detetado?</label><select data-f="or">' + INI_OR.map(function(o) { return '<option value="' + o[0] + '"' + ((d.or || "") === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>'
+                    + '<label>Como foi detetado?</label><select data-f="como">' + op([["aerodetec", "Aerodetec"], ["visual", "Visualmente (sem deteção no Aerodetec)"], ["outro", "Outro"]], d.como || "aerodetec") + '</select>'
                     + '<label>🆔 ID do drone <span class="nota">(opcional)</span></label><input data-f="id" value="' + esc(d.id) + '"/>'
-                    + '<label>Inibidor usado</label><select data-f="jam"><option value=""></option>' + jams.map(function(a) { return '<option value="' + esc(a.t) + '"' + (d.jam === a.t ? " selected" : "") + '>' + esc(a.t) + '</option>'; }).join("") + '</select>'
-                    + '<label>Resultado</label><select data-f="res"><option value=""></option><option value="sim"' + (d.res === "sim" ? " selected" : "") + '>Com sucesso</option><option value="nao"' + (d.res === "nao" ? " selected" : "") + '>Sem sucesso</option></select>'
-                    + '<label>Observações <span class="nota">(opcional)</span></label><input data-f="ob" value="' + esc(d.ob) + '"/>'
+                    + '<label>Estava autorizado?</label><select data-f="aut">' + op([["", ""], ["sim", "Sim — autorizado"], ["nao", "Não — sem autorização"]], d.aut) + '</select>'
+                    + '<label class="ck"><input type="checkbox" data-f="fa"' + (d.fa ? " checked" : "") + '/> Fora da área permitida</label>'
+                    + '<label>Ação</label><select data-f="acT">' + op([["", ""], ["nenhuma", "Sem ação"], ["inibicao", "📡 Inibição"], ["outra", "Outra ação"]], d.acT) + '</select>'
+                    + (ini ? '<label>Inibidor</label><select data-f="jam"><option value=""></option>' + jams.map(function(a) { return '<option value="' + esc(a.t) + '"' + (d.jam === a.t ? " selected" : "") + '>' + esc(a.t) + '</option>'; }).join("") + '</select>'
+                        + '<div class="row hv"><label>▶ Início</label><input type="time" data-f="t1" value="' + esc(d.t1) + '"/><button class="ag" data-t="t1">Agora</button></div>'
+                        + '<div class="row hv"><label>■ Fim</label><input type="time" data-f="t2" value="' + esc(d.t2) + '"/><button class="ag" data-t="t2">Agora</button></div>'
+                        + '<label>Resultado</label><select data-f="res">' + op([["", ""], ["sim", "Com sucesso"], ["nao", "Sem sucesso"]], d.res) + '</select>' : '')
+                    + '<label>' + (ini ? "Observações" : "O que foi feito") + ' <span class="nota">(opcional)</span></label><input data-f="ac" value="' + esc(d.ac) + '"/>'
                     + '</div>'; }).join("")
-            + '<button class="bigb" data-add-in="1" style="background:#b71c1c">📡 Inibição agora</button></div>';
+            + '<button class="bigb" data-add-dt="1">🛸 Drone detetado / avistado agora</button></div>';
     }
     function detsResumo(lst) {
         lst = lst || S.dets || []; if (!lst.length) return "";
@@ -441,7 +434,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
     }
     function diarioHtml() {
         S.diario = S.diario || [];
-        return detsHtml() + inisHtml() + '<div class="pv"><div class="nota">Aponte o que for relevante (pedidos, contactos, deteções, autuações, problemas). Fica com a hora, que pode corrigir.</div>'
+        return detsHtml() + '<div class="pv"><div class="nota">Aponte o que for relevante (pedidos, contactos, deteções, autuações, problemas). Fica com a hora, que pode corrigir.</div>'
             + '<textarea id="diTxt" placeholder="O que aconteceu?" style="min-height:60px;margin-top:6px">' + esc(S.diRasc || "") + '</textarea>'
             + '<button class="bigb" id="bDiario">📝 Registar com a hora atual</button>'
             + S.diario.map(function(d, i) {
@@ -469,7 +462,8 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                     + (noAr ? '<span class="agora" style="background:#e65100">NO AR</span>' : (i === atual ? '<span class="agora">AGORA</span>' : '')) + '</summary>'
                     + (/^1\./.test(f.nome) && S.papel !== "pct" ? '<div class="nota" style="margin:4px 0 6px">👉 Comece por <a href="#secEq" data-ir="secEq">«1. Equipa e meios»</a> (pilotos, drones e anti-drone) — fica tudo pronto antes de chegar.</div>' + matHtml() : '')
                     + (/^1\./.test(f.nome) && S.papel === "pct" ? pctRespHtml() + pctMatHtml() : '')
-                    + (/^2\./.test(f.nome) && S.papel === "pct" ? pctBriefHtml() : '')
+                    + ''
+
                     + (/^3\./.test(f.nome) && S.papel === "pct" ? pctLocalHtml() : '')
                     + (/^7\./.test(f.nome) ? kmHtml() : '')
                     + (/^6\./.test(f.nome) && S.papel !== "pct" && !S.hSaiL ? '<div class="nota" style="margin:4px 0">ℹ️ Só no fim da missão. Se vão para <strong>outro local</strong> e continuam, não marque a saída: use <a href="#secEq" data-ir="secEq">«🔄 Mudámos de local»</a> e dê nome ao novo local.</div>' : '')
@@ -571,6 +565,9 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             var d = (S.dets || [])[+r.getAttribute("data-dt")]; if (!d) return;
             var q = function(n) { var x = r.querySelector('[data-f="' + n + '"]'); return x ? x.value : ""; };
             d.h = q("h"); d.aut = q("aut"); d.ac = q("ac"); d.id = q("id");
+            ["como", "acT", "jam", "t1", "t2", "res"].forEach(function(n) { if (r.querySelector('[data-f="' + n + '"]')) d[n] = q(n); });
+            var fa = r.querySelector('[data-f="fa"]'); if (fa) d.fa = fa.checked;
+            if (d.acT === "inibicao" && !d.t1 && d.h) d.t1 = d.h;
         });
         [].forEach.call(document.querySelectorAll("[data-in]"), function(r) {
             var d = (S.inis || [])[+r.getAttribute("data-in")]; if (!d) return;
@@ -670,7 +667,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             lerCampos();
             if (ev.type === "change" && (ev.target.getAttribute("data-f") === "dr" || (ev.target.getAttribute("data-f") === "id" && ev.target.closest("[data-an]")))) { lerCampos(); render(); guardar(); return; }   // baterias compatíveis
             if (ev.type === "change" && at("data-k") === "tipo") { lerCampos(); render(); guardar(); return; }
-            if (ev.type === "change" && (/^(drAut|pmPC|ocDet|brf)$/.test(ev.target.name || "") || (ev.target.closest && (ev.target.closest("[data-dt]") && at("data-f") === "aut" || ev.target.closest("[data-in]") && at("data-f") === "res")))) { lerCampos(); renderNoSitio(ev.target); guardar(); return; }
+            if (ev.type === "change" && (/^(drAut|pmPC|ocDet|brf)$/.test(ev.target.name || "") || (ev.target.closest && (ev.target.closest("[data-dt]") && /^(aut|acT|res)$/.test(at("data-f") || "") || ev.target.closest("[data-in]") && at("data-f") === "res")))) { lerCampos(); renderNoSitio(ev.target); guardar(); return; }
             if (ev.type === "change" && (/^(cmd|chefe)$/.test(ev.target.name || "") || /^h(Sai|Cheg|SaiL|Reg)$/.test(at("data-k") || "") || (r && /^(t1|t2|mi|dr|bt)$/.test(at("data-f") || "")))) {
                 var f = $("secFita"); if (f) f.outerHTML = fitaHtml();        // fita acompanha horas e voos alterados nas secções
             }
@@ -757,7 +754,7 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
                 renderNoSitio(b); guardar(); return;
             }
             if (g("data-add-dt")) {
-                lerCampos(); S.dets = S.dets || []; S.dets.push({ h: hora(), aut: "", ac: "" }); S.ocDet = "sim";
+                lerCampos(); S.dets = S.dets || []; S.dets.push({ h: hora(), como: "aerodetec", aut: "", ac: "", id: "", acT: "" }); S.ocDet = "sim";
                 renderNoSitio(b); guardar();
                 var ul = document.querySelector('[data-dt="' + (S.dets.length - 1) + '"] [data-f="aut"]'); if (ul) ul.scrollIntoView({ block: "center" });
                 return;
@@ -912,8 +909,6 @@ var GOMTI_FICHA_APP = function _fichaDigitalApp() {
             if (pct) {
                 if (!temMat(S.chefeP)) f.push("Antes de sair: escolher o Responsável no PCT (com matrícula).");
                 if (vz(S.chefeLocal)) f.push("Chegada ao local: falta o «Local do PCT».");
-                if (vz(S.brf)) f.push("Saída da unidade: responder «Houve briefing antes de ir para o local?».");
-                else if (S.brf === "sim" && (vz(S.brfLocal) || vz(S.brfH))) f.push("Saída da unidade: falta o local ou a hora do briefing.");
             } else if (vz(S.chefe)) f.push("5. Comando: responder «Há Chefe de Equipa?».");
             else if (S.chefe === "sim" && !temMat(S.chefeP)) f.push("5. Comando: escolher o Chefe de Equipa (com matrícula).");
             [["ocDet", "Deteção de drone(s)?"], ["ocIni", "Inibição de drone(s)?"], ["ocOut", "Outras ocorrências?"]].forEach(function(o) {
